@@ -8,9 +8,15 @@
 # production
 /build
 
+# local benchmark cache/state
+/benchmarks-cache
+
 # misc
 .DS_Store
 *.pem
+*.log
+*.tmp
+*.temp
 
 # debug
 npm-debug.log*
@@ -26,5 +32,8 @@ pnpm-debug.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
+
+
+# local handoff notes
+/docs/roo-handoff.md
 

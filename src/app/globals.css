@@ -222,6 +222,64 @@ body {
   text-decoration: underline;
 }
 
+.sync-action-row {
+  margin-top: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.sync-action-row button {
+  border: 1px solid #1f4fbf;
+  background: #1f4fbf;
+  color: #fff;
+  border-radius: 6px;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.sync-action-row button:hover {
+  background: #1842a3;
+  border-color: #1842a3;
+}
+
+.sync-last-attempt-tag {
+  font-size: 0.82rem;
+  color: #555;
+}
+
+.sync-result-message {
+  border-radius: 8px;
+  padding: 0.65rem 0.8rem;
+  margin: 0.5rem 0 1rem;
+  border: 1px solid transparent;
+}
+
+.sync-result-success {
+  background: #eaf7ee;
+  color: #165c2a;
+  border-color: #b8e0c4;
+}
+
+.sync-result-info {
+  background: #eff3ff;
+  color: #1a3f98;
+  border-color: #c7d4ff;
+}
+
+.sync-result-warning {
+  background: #fff8e8;
+  color: #7f5200;
+  border-color: #f0dbac;
+}
+
+.sync-result-error {
+  background: #fdeeee;
+  color: #8b1111;
+  border-color: #efbebe;
+}
+
 .registry-diagnostics-item h2 {
   margin: 0;
   font-size: 1.05rem;

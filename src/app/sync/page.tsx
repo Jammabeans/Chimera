@@ -1,14 +1,60 @@
 import { getSyncPlan } from "@/core/registry/getSyncPlan";
+import { runManualBenchmarkSync } from "@/core/registry/runManualBenchmarkSync";
+import { redirect } from "next/navigation";
 
-export default function SyncPage() {
+interface SyncPageProps {
+  searchParams?: {
+    syncMessage?: string;
+    syncedId?: string;
+    syncStatus?: string;
+  };
+}
+
+export default function SyncPage({ searchParams }: SyncPageProps) {
+  async function syncOneBenchmarkAction(formData: FormData): Promise<void> {
+    "use server";
+
+    const benchmarkIdValue = formData.get("benchmarkId");
+    const benchmarkId = typeof benchmarkIdValue === "string" ? benchmarkIdValue : "";
+    const result = runManualBenchmarkSync(benchmarkId);
+
+    const params = new URLSearchParams();
+    params.set("syncStatus", result.status);
+    params.set("syncMessage", result.message);
+    params.set("syncedId", result.benchmarkId);
+
+    redirect(`/sync?${params.toString()}`);
+  }
+
   const syncPlan = getSyncPlan();
+  const syncMessage = searchParams?.syncMessage?.trim() ?? "";
+  const syncedId = searchParams?.syncedId?.trim() ?? "";
+  const syncStatus = searchParams?.syncStatus?.trim() ?? "";
 
   return (
     <main className="container">
       <h1>Sync Planning</h1>
       <p className="subtle">
-        This page shows planned mapping only. Sync is not implemented yet (no clone, pull, install, or execution).
+        This page supports manual sync of one benchmark at a time using approved registry entries. v1 only clones missing
+        repositories and does not fetch/pull existing cache directories.
       </p>
+
+      {syncMessage.length > 0 ? (
+        <p
+          className={`sync-result-message ${
+            syncStatus === "cloned"
+              ? "sync-result-success"
+              : syncStatus === "already-exists"
+                ? "sync-result-info"
+                : syncStatus === "rejected"
+                  ? "sync-result-warning"
+                  : "sync-result-error"
+          }`}
+          role="status"
+        >
+          {syncMessage}
+        </p>
+      ) : null}
 
       <ul className="sync-plan-list" aria-label="Sync planning list">
         {syncPlan.map((item) => (
@@ -53,6 +99,14 @@ export default function SyncPage() {
                 <dd>{item.status}</dd>
               </div>
             </dl>
+
+            <form action={syncOneBenchmarkAction} className="sync-action-row">
+              <input type="hidden" name="benchmarkId" value={item.benchmarkId} />
+              <button type="submit">Sync this benchmark</button>
+              {syncedId === item.benchmarkId && syncMessage.length > 0 ? (
+                <span className="sync-last-attempt-tag">latest attempt</span>
+              ) : null}
+            </form>
           </li>
         ))}
       </ul>

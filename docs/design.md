@@ -110,7 +110,17 @@ Scoring details, run history, and richer results views will be added in later it
   - trust mode
   - status
 - External benchmark repos are expected to expose `benchmark.manifest.json` at repo root.
-- Sync itself is intentionally not implemented in this step (planning-only, manual-sync direction).
+- Manual sync for one benchmark at a time is now supported from this route via a server-side action.
+- The action only uses approved registry metadata (`approvedRepoUrl` + `defaultRef`) for clone operations.
+- Safety boundaries for this version:
+  - reject unknown benchmark ids
+  - reject invalid benchmark id format
+  - reject non-allowlisted trust mode entries
+  - reject path traversal via resolved-path containment checks
+- Clone behavior in this version is intentionally narrow:
+  - clone only when `benchmarks-cache/<benchmark-id>/` is missing
+  - if cache directory already exists, do not fetch/pull; return `already exists`
+  - no bulk sync, package install, dynamic import, execution, model APIs, database, or background jobs
 
 ## Cache inspection route (current)
 
@@ -135,5 +145,5 @@ Scoring details, run history, and richer results views will be added in later it
   - `supportedModes`
   - `level count`
   - `owner`
-- This page is read-only in v1. No sync or mutation actions are triggered from this route.
+- This page remains read-only in v1. Sync mutation is only triggered explicitly from `/sync`.
 

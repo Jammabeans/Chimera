@@ -43,16 +43,26 @@ Chimera Core now includes a registry diagnostics view at `/registry` to validate
 - Output includes total entries, valid vs invalid counts, and per-entry errors/warnings.
 - This remains metadata-only validation; no cloning/install/import/execution/provider/database behavior is added.
 
-## Sync planning page (v1)
+## Sync page + manual sync (v1)
 
-Chimera Core now includes a sync planning view at `/sync` to show the planned mapping for future approved-repo syncs.
+Chimera Core now includes a sync view at `/sync` that shows planned benchmark-to-cache mapping and allows a manual sync attempt for one benchmark at a time.
 
 - Page route: [`/sync`](src/app/sync/page.tsx)
-- Planner utility: [`getSyncPlan()`](src/core/registry/getSyncPlan.ts:26)
+- Planner utility: [`getSyncPlan()`](src/core/registry/getSyncPlan.ts:27)
+- Manual sync utility: [`runManualBenchmarkSync()`](src/core/registry/runManualBenchmarkSync.ts:46)
 - Cache path convention: `benchmarks-cache/<benchmark-id>/`
 - Expected external manifest location after sync: `benchmark.manifest.json` at repo root
 - Expected local manifest path in plan output: `benchmarks-cache/<benchmark-id>/benchmark.manifest.json`
-- This route is planning-only; manual sync is not implemented yet.
+- Manual sync source of truth is the approved registry entry (`approvedRepoUrl` + `defaultRef`), not form/user input.
+- Basic safety checks in v1 manual sync:
+  - unknown benchmark IDs are rejected
+  - benchmark ID format is validated (kebab-case)
+  - trust mode must be `allowlisted`
+  - resolved path must remain inside the `benchmarks-cache` base directory
+- v1 sync behavior is intentionally narrow:
+  - clone only when the target cache directory is missing
+  - if cache directory already exists, return `already-exists` and do not fetch/pull
+  - no bulk sync, package install, dynamic import, benchmark execution, model API, or database behavior
 
 ## Cache inspection page (v1)
 
@@ -72,7 +82,7 @@ Chimera Core now includes a read-only cache inspection view at `/cache` to check
   - `manifest-valid`
 - The page displays benchmark name/id, cache path, manifest path, status, and validation errors.
 - When status is `manifest-valid`, the page also shows a parsed manifest preview (`id`, `name`, `version`, `weaknessCategory`, `supportedModes`, `level count`, `owner`).
-- Scope remains inspection-only: no clone/fetch/pull/install/dynamic-import/execution/model/database behavior is added.
+- Scope remains inspection-only by default. Sync mutation occurs only when explicitly triggered from `/sync`.
 
 ## Benchmark repo contract (v1)
 

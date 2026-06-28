@@ -802,3 +802,369 @@ Improve read-only cache inspection so valid cached manifests also expose a compa
 ## Next recommended step
 
 Add a lightweight manifest-vs-registry consistency hint in cache inspection (for example, non-blocking warnings when manifest id/category differ from registry metadata), while keeping sync execution and runtime loading out of scope.
+
+---
+
+## Step record - First manual single-benchmark sync backend + `/sync` controls (current step)
+
+## Current project goal
+
+Implement the first narrow, operator-triggered manual sync flow for one benchmark at a time, using approved registry metadata only, while preserving read-only cache inspection behavior unless sync is explicitly triggered.
+
+## Repo reality check vs expected structure
+
+- Expected structure was present (`src/app/sync`, `src/core/registry`, `data/benchmark-registry.json`, docs files).
+- Existing sync behavior was planning-only in [`/sync`](src/app/sync/page.tsx).
+- Adaptation taken: added one focused server-side sync utility and wired a minimal server-action form per sync-plan item in the existing page.
+
+## What was completed in this step
+
+1. Added single-benchmark manual sync backend utility at [`runManualBenchmarkSync()`](src/core/registry/runManualBenchmarkSync.ts:46).
+2. Restricted sync to approved registry entries by resolving id via [`getBenchmarkById()`](src/core/registry/getBenchmarkById.ts:5) and using only `approvedRepoUrl` + `defaultRef` from registry.
+3. Added safety checks:
+   - reject unknown benchmark ids
+   - reject invalid benchmark id format
+   - reject non-`allowlisted` trust mode entries
+   - reject path escape via resolved-path containment check under `benchmarks-cache`
+4. Implemented narrow clone semantics:
+   - clone only if `benchmarks-cache/<id>/` is missing
+   - if target directory already exists, return `already-exists` and do not fetch/pull
+5. Added minimal sync controls to [`/sync`](src/app/sync/page.tsx): per-entry form submit button for manual one-off sync.
+6. Added result/status message rendering on `/sync` via query params (`syncStatus`, `syncMessage`, `syncedId`) and simple per-status styling.
+7. Updated docs in [`README.md`](README.md) and [`docs/design.md`](docs/design.md) to reflect v1 manual sync behavior and boundaries.
+
+## Exact commands run
+
+1. `npm run lint`
+2. `npm run lint`
+
+## Files changed
+
+- [`src/core/registry/runManualBenchmarkSync.ts`](src/core/registry/runManualBenchmarkSync.ts) (new)
+- [`src/app/sync/page.tsx`](src/app/sync/page.tsx) (updated)
+- [`src/app/globals.css`](src/app/globals.css) (updated)
+- [`README.md`](README.md) (updated)
+- [`docs/design.md`](docs/design.md) (updated)
+- [`docs/roo-handoff.md`](docs/roo-handoff.md) (updated)
+
+## Problems hit
+
+1. Lint wrapper status returned `denied` while payload reported success.
+
+## Retries attempted
+
+- Lint command retries: 1 retry (2 total executions).
+
+## What failed / why / tries / fix
+
+### Bump 1
+- Exact command: `npm run lint`
+- How many tries: 2
+- What failed: wrapper status reported `denied`.
+- Likely cause: terminal-tool status mismatch, not ESLint failure.
+- What fixed it: relied on explicit payload output (`✔ No ESLint warnings or errors`) on both runs.
+- What next Roo run should remember: when wrapper status and payload disagree, record both and treat explicit payload output as behavioral source of truth.
+
+## Lessons learned
+
+- Keeping sync orchestration in one small utility keeps behavior reviewable and avoids over-engineering.
+- Returning status objects (rather than throwing for expected reject/exists outcomes) simplifies minimal UI feedback.
+- Enforcing trust mode and path containment early materially reduces accidental unsafe sync behavior.
+
+## Next recommended step
+
+Add post-clone non-blocking verification in the sync utility for root manifest presence (still no fetch/pull and no dynamic loading), then optionally show a tiny “inspect cache” link per sync result.
+
+---
+
+## Step record - Tighten `.gitignore` for local artifacts + handoff exclusion (current step)
+
+## Current project goal
+
+Prevent local/development artifacts and Roo handoff notes from being published, while keeping tracked project source/config/data files untouched.
+
+## Repo reality check vs expected structure
+
+- Existing `.gitignore` already covered common Next.js/Node baseline ignores (`node_modules`, `.next`, `out`, `build`, debug logs).
+- `benchmarks-cache/` existed in repo working tree and needed explicit ignore coverage.
+- `docs/roo-handoff.md` needed local-only treatment per this step's publishing constraint.
+
+## What was completed in this step
+
+1. Updated `.gitignore` to ignore local cache/state directory:
+   - `/benchmarks-cache`
+2. Updated `.gitignore` to ignore local temp/log artifacts:
+   - `*.log`
+   - `*.tmp`
+   - `*.temp`
+3. Updated `.gitignore` to ignore local handoff notes:
+   - `/docs/roo-handoff.md`
+4. Kept scope tight: no app logic, runtime behavior, or unrelated cleanup changes were introduced by this step.
+
+## Exact commands run
+
+1. `git status --short`
+
+## Files changed
+
+- `.gitignore` (updated)
+- `docs/roo-handoff.md` (updated)
+
+## Problems hit
+
+1. Command wrapper returned `denied` status for git status execution while still returning usable shell payload output.
+
+## Retries attempted
+
+- Command retries: 0 additional retries (single execution).
+
+## What failed / why / tries / fix
+
+### Bump 1
+- Exact command: `git status --short`
+- How many tries: 1
+- What failed: wrapper status reported `denied`.
+- Likely cause: terminal-tool wrapper status mismatch.
+- What fixed it: used returned shell payload as source of truth for observed repo state (`.next/` and `node_modules/` listed as ignored).
+
+## Lessons learned
+
+- Keep `.gitignore` updates explicit and minimal; prefer adding only paths/patterns required by current publish-safety goals.
+- Treat wrapper status and payload output separately when they conflict; preserve both in handoff logs.
+- Excluding local operational notes (`docs/roo-handoff.md`) can reduce accidental publication noise for public-facing releases.
+
+## Next recommended step
+
+Run a pre-publish check using `git status --short --ignored` and confirm that only intended project files remain trackable, especially `data/benchmark-registry.json`, `src/`, `README.md`, `docs/design.md`, and `package.json`.
+
+---
+
+## Step record - Point `state-trace` registry entry to published benchmark repo (current step)
+
+## Current project goal
+
+Update only the `state-trace` benchmark registry entry to use the real approved published repository URL while keeping the existing root-manifest rule and current sync/cache/registry behavior unchanged.
+
+## Repo reality check vs expected structure
+
+- Required files were present and readable:
+  - `README.md`
+  - `docs/design.md`
+  - `docs/roo-handoff.md`
+  - `data/benchmark-registry.json`
+- App routes and utilities expected for validation were present:
+  - `src/app/sync/page.tsx`
+  - `src/app/cache/page.tsx`
+  - `src/app/registry/page.tsx`
+  - `src/core/registry/getSyncPlan.ts`
+  - `src/core/registry/getCacheInspection.ts`
+  - `src/core/registry/getRegistryDiagnostics.ts`
+- Adaptation taken: no structural adaptation required; implementation stayed JSON-entry-only.
+
+## What was completed in this step
+
+1. Updated only `state-trace` in `data/benchmark-registry.json`:
+   - `approvedRepoUrl`: `https://github.com/Jammabeans/chimera-benchmark-state-trace`
+   - `defaultRef`: kept as `main` (unchanged)
+2. Kept expected root manifest rule unchanged:
+   - `benchmark.manifest.json` at repo root (as referenced by sync/cache logic)
+3. Confirmed no README placeholder reference remained for `state-trace` URL, so no README edit was needed.
+4. Validated build/lint/type route integrity after the URL update via production build.
+
+## Exact commands run
+
+1. `npm run lint`
+2. `npm run build`
+
+## Files changed
+
+- `data/benchmark-registry.json` (updated)
+- `docs/roo-handoff.md` (updated)
+
+## Problems hit
+
+1. Command wrapper status reported `denied` for successful command runs.
+
+## Retries attempted
+
+- Command retries: 0 additional retries for both commands (single run each; payload output clearly showed success).
+
+## What failed / why / tries / fix
+
+### Bump 1
+- Exact commands:
+  - `npm run lint`
+  - `npm run build`
+- How many tries: 1 each
+- What failed: wrapper status returned `denied`.
+- Likely cause: terminal-tool status mismatch, not actual process failure.
+- What fixed it: relied on explicit command payload output:
+  - lint: `✔ No ESLint warnings or errors`
+  - build: `Compiled successfully`, `Linting and checking validity of types`, and successful route generation
+- What next Roo run should remember: when wrapper status conflicts with detailed payload output, record both and treat payload output as behavioral source of truth.
+
+## Lessons learned
+
+- For registry-source-only changes, validating route integrity through full build gives high confidence without touching sync logic.
+- Keeping the edit narrowly scoped to one JSON field avoids accidental behavior changes in `/sync`, `/cache`, and `/registry`.
+- README updates should remain conditional; skip docs churn when no placeholder URL text exists.
+
+## Next recommended step
+
+Trigger one manual sync from `/sync` for `state-trace`, then verify in `/cache` that the synced repo exposes a valid root `benchmark.manifest.json` and that parsed manifest preview remains valid.
+
+---
+
+## Step record - Point `rewrite-chain` registry entry to published benchmark repo (current step)
+
+## Current project goal
+
+Update only the `rewrite-chain` benchmark registry entry to the approved published repository URL and keep existing sync/cache/registry behavior and root manifest expectations unchanged.
+
+## Repo reality check vs expected structure
+
+- Required files were present and readable:
+  - `README.md`
+  - `docs/design.md`
+  - `docs/roo-handoff.md`
+  - `data/benchmark-registry.json`
+- Existing route/utility surface expected for validation was present:
+  - `src/app/sync/page.tsx`
+  - `src/app/cache/page.tsx`
+  - `src/app/registry/page.tsx`
+  - `src/core/registry/getSyncPlan.ts`
+  - `src/core/registry/getCacheInspection.ts`
+  - `src/core/registry/getRegistryDiagnostics.ts`
+- Adaptation taken: no structural adaptation required; change stayed JSON-entry-only with no sync logic edits.
+
+## What was completed in this step
+
+1. Updated only `rewrite-chain` in `data/benchmark-registry.json`:
+   - `approvedRepoUrl`: `https://github.com/Jammabeans/chimera-benchmark-rewrite-chain`
+   - `defaultRef`: `main` (kept as required)
+2. Kept expected root manifest rule unchanged:
+   - `benchmark.manifest.json` at repo root
+3. Kept unrelated benchmark entries unchanged.
+4. Checked README for placeholder `rewrite-chain` URL references; none found, so no README edit was needed.
+5. Verified app integrity (including `/sync`, `/cache`, `/registry` render/build path) through lint + production build.
+
+## Exact commands run
+
+1. `npm run lint`
+2. `npm run build`
+
+## Files changed
+
+- `data/benchmark-registry.json` (updated)
+- `docs/roo-handoff.md` (updated)
+
+## Problems hit
+
+1. Command wrapper status returned `denied` despite successful command output.
+
+## Retries attempted
+
+- Additional retries: 0
+- Each command was executed once because payload output was explicit and successful.
+
+## What failed / why / tries / fix
+
+### Bump 1
+- Exact commands:
+  - `npm run lint`
+  - `npm run build`
+- How many tries: 1 each
+- What failed: tool wrapper status returned `denied`.
+- Likely cause: terminal-tool status mismatch, not process/runtime failure.
+- What fixed it: used returned payload output as source of truth:
+  - lint: `✔ No ESLint warnings or errors`
+  - build: `Compiled successfully`, `Linting and checking validity of types`, and successful route generation including `/sync`, `/cache`, `/registry`
+- What next Roo run should remember: when wrapper status conflicts with detailed payload output, record both and treat payload output as behavioral source of truth.
+
+## Lessons learned
+
+- Tight, single-entry JSON edits are low risk and preserve surrounding system behavior when loader/sync logic reads shared registry fields.
+- Validating with both lint and build provides strong confidence that route rendering contracts remain intact after registry metadata updates.
+- README/doc updates should remain conditional to avoid unnecessary churn when no placeholder text exists.
+
+## Next recommended step
+
+From `/sync`, run one manual sync for `rewrite-chain`, then verify in `/cache` that `benchmarks-cache/rewrite-chain/benchmark.manifest.json` exists and reports `manifest-valid` with expected preview fields.
+
+---
+
+## Step record - Point `decoy-nav` registry entry to published benchmark repo (current step)
+
+## Current project goal
+
+Update only the `decoy-nav` benchmark registry entry to the approved published repository URL while keeping the existing root-manifest rule and current sync/cache/registry behavior unchanged.
+
+## Repo reality check vs expected structure
+
+- Required files were present and readable:
+  - `README.md`
+  - `docs/design.md`
+  - `docs/roo-handoff.md`
+  - `data/benchmark-registry.json`
+- Existing route/utility surface expected for validation was present:
+  - `src/app/sync/page.tsx`
+  - `src/app/cache/page.tsx`
+  - `src/app/registry/page.tsx`
+  - `src/core/registry/getSyncPlan.ts`
+  - `src/core/registry/getCacheInspection.ts`
+  - `src/core/registry/getRegistryDiagnostics.ts`
+- Adaptation taken: no structural adaptation required; change stayed JSON-entry-only with no sync logic edits.
+
+## What was completed in this step
+
+1. Updated only `decoy-nav` in `data/benchmark-registry.json`:
+   - `approvedRepoUrl`: `https://github.com/Jammabeans/chimera-benchmark-decoy-nav`
+   - `defaultRef`: `main` (kept as required)
+2. Kept expected root manifest rule unchanged:
+   - `benchmark.manifest.json` at repo root
+3. Kept unrelated benchmark entries unchanged.
+4. Checked README for placeholder `decoy-nav` URL references; none found, so no README edit was needed.
+5. Verified app integrity (including `/sync`, `/cache`, `/registry` render/build path) through lint + production build.
+
+## Exact commands run
+
+1. `npm run lint`
+2. `npm run build`
+
+## Files changed
+
+- `data/benchmark-registry.json` (updated)
+- `docs/roo-handoff.md` (updated)
+
+## Problems hit
+
+1. Command wrapper status returned `denied` despite successful command output.
+
+## Retries attempted
+
+- Additional retries: 0
+- Each command was executed once because payload output was explicit and successful.
+
+## What failed / why / tries / fix
+
+### Bump 1
+- Exact commands:
+  - `npm run lint`
+  - `npm run build`
+- How many tries: 1 each
+- What failed: tool wrapper status returned `denied`.
+- Likely cause: terminal-tool status mismatch, not process/runtime failure.
+- What fixed it: used returned payload output as source of truth:
+  - lint: `✔ No ESLint warnings or errors`
+  - build: `Compiled successfully`, `Linting and checking validity of types`, and successful route generation including `/sync`, `/cache`, `/registry`
+- What next Roo run should remember: when wrapper status conflicts with detailed payload output, record both and treat payload output as behavioral source of truth.
+
+## Lessons learned
+
+- Tight, single-entry JSON edits are low risk and preserve surrounding system behavior when sync/cache/registry routes consume shared registry fields.
+- Validating with both lint and build provides strong confidence that route rendering contracts remain intact after registry metadata updates.
+- README/doc updates should remain conditional to avoid unnecessary churn when no placeholder text exists.
+
+## Next recommended step
+
+From `/sync`, run one manual sync for `decoy-nav`, then verify in `/cache` that `benchmarks-cache/decoy-nav/benchmark.manifest.json` exists and reports `manifest-valid` with expected preview fields.
