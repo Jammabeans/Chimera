@@ -131,6 +131,45 @@ Scope boundaries for this step:
 - No model API integration.
 - No database/storage setup.
 
+## Runtime benchmark contract (v1)
+
+Chimera Core now also defines a separate **runtime** benchmark contract for manual deterministic benchmark runs.
+
+- Runtime contract types are defined in [`src/types/runtimeBenchmarkContract.ts`](src/types/runtimeBenchmarkContract.ts).
+- The runtime contract is intentionally separate from:
+  - registry entry types in [`BenchmarkRegistryEntry`](src/types/benchmark.ts:20)
+  - external manifest contract types in [`ExternalBenchmarkManifest`](src/types/externalBenchmarkContract.ts:10)
+- A typed runtime module example is provided in [`RUNTIME_BENCHMARK_MODULE_EXAMPLE`](src/core/runner/runtimeBenchmarkModuleExample.ts:37).
+- The contract page at [`/contract`](src/app/contract/page.tsx) now documents both the manifest contract and the runtime contract.
+
+Minimal runtime v1 shape:
+
+- Runtime benchmark module:
+  - `manifest`
+  - `cases`
+  - `scoreAnswer(caseId, answerText)`
+- Benchmark case:
+  - `id`
+  - `levelId`
+  - `title`
+  - `prompt`
+  - optional `metadata`
+- Answer submission:
+  - `answerText`
+- Score result:
+  - `correct`
+  - `score`
+  - `expectedAnswer`
+  - `message`
+
+Runtime scope boundaries in this step:
+
+- plain text answers only
+- static deterministic cases only
+- simple scoring only
+- no execution UI yet
+- no model API calls
+
 ## Install
 
 ```bash

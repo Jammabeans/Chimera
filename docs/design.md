@@ -66,6 +66,50 @@ Notes for this version:
 - No clone/install/dynamic-import/execution/model API/storage behavior is implemented in this step.
 - Registry entry types remain separate from external repo manifest types.
 
+### Runtime benchmark contract (v1)
+
+Chimera Core now defines a second, separate contract for runtime benchmark modules used by manual deterministic runs.
+
+Minimal runtime module shape:
+
+- `manifest`
+- `cases`
+- `scoreAnswer(caseId, answerText)`
+
+Minimal runtime case shape:
+
+- `id`
+- `levelId`
+- `title`
+- `prompt`
+- optional `metadata`
+
+Minimal answer submission shape:
+
+- `answerText`
+
+Minimal score result shape:
+
+- `correct`
+- `score`
+- `expectedAnswer`
+- `message`
+
+Current runtime contract artifacts:
+
+- Type contract: `src/types/runtimeBenchmarkContract.ts`
+- Typed runtime example module: `src/core/runner/runtimeBenchmarkModuleExample.ts`
+- Human-readable contract route (manifest + runtime): `/contract`
+
+Notes for this version:
+
+- Runtime contract is intentionally simple for v1.
+- Plain text answers only.
+- Static deterministic cases only.
+- Simple scoring only.
+- Manual run flow will come before model API execution.
+- No execution UI, API routes, or provider integrations are added in this step.
+
 ## Scoring/results UI (later)
 
 Scoring details, run history, and richer results views will be added in later iterations.

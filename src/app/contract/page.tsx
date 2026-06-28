@@ -1,4 +1,5 @@
 import { EXTERNAL_BENCHMARK_MANIFEST_EXAMPLE } from "@/core/registry/externalBenchmarkManifestExample";
+import { RUNTIME_BENCHMARK_MODULE_EXAMPLE } from "@/core/runner/runtimeBenchmarkModuleExample";
 
 const REQUIRED_FIELDS = [
   "id",
@@ -12,6 +13,12 @@ const REQUIRED_FIELDS = [
   "owner",
 ] as const;
 
+const RUNTIME_CASE_FIELDS = ["id", "levelId", "title", "prompt", "metadata (optional)"] as const;
+
+const RUNTIME_ANSWER_FIELDS = ["answerText"] as const;
+
+const RUNTIME_SCORE_FIELDS = ["correct", "score", "expectedAnswer", "message"] as const;
+
 const EXAMPLE_FOLDER_LAYOUT = `external-benchmark-repo/
   benchmark.manifest.json
   src/
@@ -22,18 +29,29 @@ const EXAMPLE_FOLDER_LAYOUT = `external-benchmark-repo/
       basic.ts
       context-heavy.ts`;
 
+const RUNTIME_SCORE_SIGNATURE = `scoreAnswer(caseId: string, answerText: string): {
+  correct: boolean;
+  score: number;
+  expectedAnswer: string;
+  message: string;
+}`;
+
 export default function ContractPage() {
   return (
     <main className="container">
-      <h1>Benchmark Repo Contract (v1)</h1>
+      <h1>Benchmark Contracts (v1)</h1>
       <p className="subtle">
-        External benchmark repositories must expose a minimal manifest that Chimera Core can understand. This step
-        defines the manifest shape only; loading, cloning, install, execution, providers, and storage are intentionally
-        out of scope.
+        Chimera Core currently defines two complementary contracts: a benchmark repo manifest contract and a minimal
+        runtime benchmark contract for deterministic, plain-text manual scoring.
       </p>
 
       <section className="contract-section" aria-label="Required manifest fields">
-        <h2>Required manifest fields</h2>
+        <h2>1) Manifest contract (external repo)</h2>
+        <p className="subtle">
+          External benchmark repositories must expose this minimal manifest shape. Clone/install/execution/provider
+          behavior remains out of scope in this step.
+        </p>
+        <h3>Required manifest fields</h3>
         <ul className="contract-field-list">
           {REQUIRED_FIELDS.map((field) => (
             <li key={field}>
@@ -44,7 +62,7 @@ export default function ContractPage() {
       </section>
 
       <section className="contract-section" aria-label="Sample benchmark manifest">
-        <h2>Sample manifest</h2>
+        <h3>Sample manifest</h3>
         <p className="subtle">This example is formatted for readability and mirrors the required v1 fields.</p>
         <pre className="contract-code-block">
           <code>{JSON.stringify(EXTERNAL_BENCHMARK_MANIFEST_EXAMPLE, null, 2)}</code>
@@ -52,9 +70,54 @@ export default function ContractPage() {
       </section>
 
       <section className="contract-section" aria-label="Example external repo folder layout">
-        <h2>Example external repo folder layout</h2>
+        <h3>Example external repo folder layout</h3>
         <pre className="contract-code-block">
           <code>{EXAMPLE_FOLDER_LAYOUT}</code>
+        </pre>
+      </section>
+
+      <section className="contract-section" aria-label="Runtime benchmark contract">
+        <h2>2) Runtime benchmark contract (v1)</h2>
+        <p className="subtle">
+          Runtime benchmark modules are intentionally simple for v1: static deterministic cases, plain text answers,
+          and straightforward scoring.
+        </p>
+
+        <h3>Benchmark case fields</h3>
+        <ul className="contract-field-list">
+          {RUNTIME_CASE_FIELDS.map((field) => (
+            <li key={field}>
+              <code>{field}</code>
+            </li>
+          ))}
+        </ul>
+
+        <h3>Answer submission field</h3>
+        <ul className="contract-field-list">
+          {RUNTIME_ANSWER_FIELDS.map((field) => (
+            <li key={field}>
+              <code>{field}</code>
+            </li>
+          ))}
+        </ul>
+
+        <h3>Score result fields</h3>
+        <ul className="contract-field-list">
+          {RUNTIME_SCORE_FIELDS.map((field) => (
+            <li key={field}>
+              <code>{field}</code>
+            </li>
+          ))}
+        </ul>
+
+        <h3>Sample runtime module</h3>
+        <pre className="contract-code-block">
+          <code>{JSON.stringify(RUNTIME_BENCHMARK_MODULE_EXAMPLE, null, 2)}</code>
+        </pre>
+
+        <h3>Required scorer signature</h3>
+        <pre className="contract-code-block">
+          <code>{RUNTIME_SCORE_SIGNATURE}</code>
         </pre>
       </section>
     </main>

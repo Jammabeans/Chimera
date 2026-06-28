@@ -1350,3 +1350,90 @@ Upgrade benchmark detail pages so each `/benchmarks/[id]` view shows both regist
 ## Next recommended step
 
 Add non-blocking consistency hints on benchmark detail pages (for example, warning if cached manifest id or weakness category differs from registry metadata), while keeping sync/execution/API/database/background-job behavior out of scope.
+
+---
+
+## Step record - Minimal runtime benchmark contract v1 (current step)
+
+## Current project goal
+
+Define the minimal v1 runtime benchmark contract in Chimera Core (types + docs only), keep it separate from registry/manifest contracts, and avoid execution UI/API implementation.
+
+## Repo reality check vs expected structure
+
+- Required files were present and readable:
+  - `README.md`
+  - `docs/design.md`
+  - `docs/roo-handoff.md`
+  - `src/types/externalBenchmarkContract.ts`
+  - `src/types/benchmark.ts`
+- Existing contract documentation route at `/contract` was present and currently focused on manifest contract only.
+- Adaptation taken: added a dedicated runtime contract type file and a typed runtime example module, then expanded `/contract` docs to cover both contracts.
+
+## What was completed in this step
+
+1. Added a separate runtime benchmark contract type file:
+   - `RuntimeBenchmarkCase`
+   - `RuntimeBenchmarkAnswerSubmission`
+   - `RuntimeBenchmarkScoreResult`
+   - `RuntimeBenchmarkModule`
+2. Kept runtime contract intentionally minimal for v1:
+   - plain text answers only
+   - static deterministic cases only
+   - simple scoring
+3. Added a typed runtime module example with deterministic scoring logic and static cases.
+4. Updated `/contract` to document both:
+   - external manifest contract
+   - runtime benchmark contract
+5. Updated README with a new runtime benchmark contract section.
+6. Updated design doc with a dedicated runtime contract subsection.
+
+## Exact commands run
+
+1. `npm run lint`
+2. `npm run build`
+3. `git status --short`
+
+## Files changed
+
+- `src/types/runtimeBenchmarkContract.ts` (new)
+- `src/core/runner/runtimeBenchmarkModuleExample.ts` (new)
+- `src/app/contract/page.tsx` (updated)
+- `README.md` (updated)
+- `docs/design.md` (updated)
+- `docs/roo-handoff.md` (updated)
+
+## Problems hit
+
+1. Command wrapper status returned `denied` for all executed commands while payload output showed successful command completion.
+
+## Retries attempted
+
+- Additional retries: 0
+- Reason: payload output for lint/build was explicit and successful on first attempt.
+
+## What failed / why / tries / fix
+
+### Bump 1
+- Exact commands:
+  - `npm run lint`
+  - `npm run build`
+  - `git status --short`
+- How many tries: 1 each
+- What failed: tool wrapper status reported `denied`.
+- Likely cause: terminal-tool wrapper status mismatch rather than command/runtime failure.
+- What fixed it: used explicit payload output as behavioral source of truth:
+  - lint payload: `✔ No ESLint warnings or errors`
+  - build payload: `Compiled successfully`, `Linting and checking validity of types`, static generation completed including `/contract`
+  - git payload: returned changed/new files including the new runtime contract files
+- What next Roo run should remember: when wrapper status conflicts with explicit payload output, record both and treat payload output as behavioral source of truth.
+
+## Lessons learned
+
+- Keeping runtime contract types in a dedicated file avoids coupling with registry and external manifest ingestion contracts.
+- A typed runtime example with deterministic scoring clarifies contract usage without introducing execution UI or API scope.
+- `/contract` remains a practical place to keep manifest and runtime contracts aligned for contributors.
+
+## Next recommended step
+
+Implement a minimal manual run adapter in core logic that consumes `RuntimeBenchmarkModule` in-memory (no API route/UI mutation yet), then expose read-only preview data for cases and scoring contract expectations.
