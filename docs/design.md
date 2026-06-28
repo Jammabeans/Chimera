@@ -127,5 +127,13 @@ Scoring details, run history, and richer results views will be added in later it
   - `manifest-invalid`
   - `manifest-valid`
 - `/cache` renders benchmark name/id, cache path, manifest path, status, and validation errors (if any).
+- For `manifest-valid` entries, `/cache` also renders a compact parsed manifest preview:
+  - `id`
+  - `name`
+  - `version`
+  - `weaknessCategory`
+  - `supportedModes`
+  - `level count`
+  - `owner`
 - This page is read-only in v1. No sync or mutation actions are triggered from this route.
 

@@ -71,6 +71,7 @@ Chimera Core now includes a read-only cache inspection view at `/cache` to check
   - `manifest-invalid`
   - `manifest-valid`
 - The page displays benchmark name/id, cache path, manifest path, status, and validation errors.
+- When status is `manifest-valid`, the page also shows a parsed manifest preview (`id`, `name`, `version`, `weaknessCategory`, `supportedModes`, `level count`, `owner`).
 - Scope remains inspection-only: no clone/fetch/pull/install/dynamic-import/execution/model/database behavior is added.
 
 ## Benchmark repo contract (v1)

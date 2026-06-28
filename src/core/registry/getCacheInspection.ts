@@ -34,6 +34,17 @@ export interface BenchmarkCacheInspectionItem {
   manifestPath: string;
   status: BenchmarkCacheStatus;
   validationErrors: string[];
+  manifestPreview: BenchmarkManifestPreview | null;
+}
+
+export interface BenchmarkManifestPreview {
+  manifestId: string;
+  name: string;
+  version: string;
+  weaknessCategory: BenchmarkWeaknessCategory;
+  supportedModes: ExternalBenchmarkSupportedMode[];
+  levelCount: number;
+  owner: string;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -121,6 +132,18 @@ function validateExternalManifestShape(manifest: unknown): string[] {
   return errors;
 }
 
+function createManifestPreview(manifest: ExternalBenchmarkManifest): BenchmarkManifestPreview {
+  return {
+    manifestId: manifest.id,
+    name: manifest.name,
+    version: manifest.version,
+    weaknessCategory: manifest.weaknessCategory,
+    supportedModes: manifest.supportedModes,
+    levelCount: manifest.levels.length,
+    owner: manifest.owner,
+  };
+}
+
 export function getCacheInspection(): BenchmarkCacheInspectionItem[] {
   const registryEntries = getRegisteredBenchmarks();
 
@@ -139,6 +162,7 @@ export function getCacheInspection(): BenchmarkCacheInspectionItem[] {
         manifestPath,
         status: "cache-missing",
         validationErrors: [],
+        manifestPreview: null,
       };
     }
 
@@ -150,6 +174,7 @@ export function getCacheInspection(): BenchmarkCacheInspectionItem[] {
         manifestPath,
         status: "manifest-missing",
         validationErrors: [],
+        manifestPreview: null,
       };
     }
 
@@ -166,6 +191,7 @@ export function getCacheInspection(): BenchmarkCacheInspectionItem[] {
         manifestPath,
         status: "manifest-invalid",
         validationErrors: ["Manifest is not valid JSON."],
+        manifestPreview: null,
       };
     }
 
@@ -179,8 +205,11 @@ export function getCacheInspection(): BenchmarkCacheInspectionItem[] {
         manifestPath,
         status: "manifest-invalid",
         validationErrors,
+        manifestPreview: null,
       };
     }
+
+    const manifestPreview = createManifestPreview(parsedManifest as ExternalBenchmarkManifest);
 
     return {
       benchmarkId: entry.id,
@@ -189,6 +218,7 @@ export function getCacheInspection(): BenchmarkCacheInspectionItem[] {
       manifestPath,
       status: "manifest-valid",
       validationErrors: [],
+      manifestPreview,
     };
   });
 }

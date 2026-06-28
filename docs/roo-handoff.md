@@ -723,3 +723,82 @@ Add read-only local cache inspection so operators can see, per registry benchmar
 ## Next recommended step
 
 Add an operator-triggered, manual sync action page flow that can populate/update cache directories for a selected benchmark, then immediately re-use cache inspection output to confirm manifest presence/validity (still no dynamic import/execution/model/storage behavior).
+
+---
+
+## Step record - Cache manifest preview in `/cache` (current step)
+
+## Current project goal
+
+Improve read-only cache inspection so valid cached manifests also expose a compact parsed preview in the UI while preserving existing status/error visibility.
+
+## Repo reality check vs expected structure
+
+- Repo structure matched expectations for a Next.js App Router codebase with registry/cache utilities already present.
+- Existing cache inspection flow and page were found at:
+  - `src/core/registry/getCacheInspection.ts`
+  - `src/app/cache/page.tsx`
+- Adaptation taken: extended existing utility/page/CSS in place (no API route, no new library, no sync execution logic).
+
+## What was completed in this step
+
+1. Extended cache inspection output model to include `manifestPreview` for valid manifests only.
+2. Added compact preview shape with fields:
+   - manifest id
+   - name
+   - version
+   - weaknessCategory
+   - supportedModes
+   - level count
+   - owner
+3. Kept validation logic basic and aligned with the existing external benchmark contract checks.
+4. Preserved clear status handling for:
+   - `cache-missing`
+   - `manifest-missing`
+   - `manifest-invalid`
+   - `manifest-valid`
+5. Updated `/cache` UI to render manifest preview for `manifest-valid` entries.
+6. Added minimal visual distinction for status labels (valid/invalid/missing) with simple CSS classes.
+7. Kept page behavior read-only and inspection-only.
+8. Updated README cache section and design doc to mention valid-manifest preview behavior.
+
+## Exact commands run
+
+1. `npm run lint`
+
+## Files changed
+
+- `src/core/registry/getCacheInspection.ts` (updated)
+- `src/app/cache/page.tsx` (updated)
+- `src/app/globals.css` (updated)
+- `README.md` (updated)
+- `docs/design.md` (updated)
+- `docs/roo-handoff.md` (updated)
+
+## Problems hit
+
+1. Lint command returned wrapper status `denied` while payload reported success.
+
+## Retries attempted
+
+- Lint command retries: 0 additional retries (1 total execution).
+
+## What failed / why / tries / fix
+
+### Bump 1
+- Exact command: `npm run lint`
+- How many tries: 1
+- What failed: tool wrapper status returned `denied`.
+- Likely cause: terminal-tool wrapper status mismatch, not an ESLint failure.
+- What fixed it: relied on explicit command payload feedback: `✔ No ESLint warnings or errors`.
+- What next Roo run should remember: when wrapper status conflicts with explicit command payload text, record both and treat payload output as behavioral source of truth.
+
+## Lessons learned
+
+- Returning parsed preview data from utility layer keeps route components simple and read-only.
+- Status-specific visual cues can improve scanability without introducing design complexity.
+- Keeping preview fields intentionally small avoids over-engineering and preserves v1 architecture boundaries.
+
+## Next recommended step
+
+Add a lightweight manifest-vs-registry consistency hint in cache inspection (for example, non-blocking warnings when manifest id/category differ from registry metadata), while keeping sync execution and runtime loading out of scope.

@@ -1,5 +1,21 @@
 import { getCacheInspection } from "@/core/registry/getCacheInspection";
 
+function getStatusClassName(status: string): string {
+  if (status === "manifest-valid") {
+    return "cache-status-valid";
+  }
+
+  if (status === "manifest-invalid") {
+    return "cache-status-invalid";
+  }
+
+  if (status === "cache-missing" || status === "manifest-missing") {
+    return "cache-status-missing";
+  }
+
+  return "";
+}
+
 export default function CachePage() {
   const cacheInspection = getCacheInspection();
 
@@ -33,10 +49,56 @@ export default function CachePage() {
               <div>
                 <dt>Cache Status</dt>
                 <dd>
-                  <code>{item.status}</code>
+                  <code className={getStatusClassName(item.status)}>{item.status}</code>
                 </dd>
               </div>
             </dl>
+
+            {item.status === "manifest-valid" && item.manifestPreview ? (
+              <section>
+                <h3>Manifest Preview</h3>
+                <dl>
+                  <div>
+                    <dt>Manifest ID</dt>
+                    <dd>
+                      <code>{item.manifestPreview.manifestId}</code>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Name</dt>
+                    <dd>{item.manifestPreview.name}</dd>
+                  </div>
+                  <div>
+                    <dt>Version</dt>
+                    <dd>
+                      <code>{item.manifestPreview.version}</code>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Weakness Category</dt>
+                    <dd>
+                      <code>{item.manifestPreview.weaknessCategory}</code>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Supported Modes</dt>
+                    <dd>
+                      <code>{item.manifestPreview.supportedModes.join(", ")}</code>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Level Count</dt>
+                    <dd>{item.manifestPreview.levelCount}</dd>
+                  </div>
+                  <div>
+                    <dt>Owner</dt>
+                    <dd>
+                      <code>{item.manifestPreview.owner}</code>
+                    </dd>
+                  </div>
+                </dl>
+              </section>
+            ) : null}
 
             {item.validationErrors.length > 0 ? (
               <section>
