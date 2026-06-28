@@ -1,5 +1,4 @@
 import { EXTERNAL_BENCHMARK_MANIFEST_EXAMPLE } from "@/core/registry/externalBenchmarkManifestExample";
-import Link from "next/link";
 
 const REQUIRED_FIELDS = [
   "id",
@@ -26,10 +25,6 @@ const EXAMPLE_FOLDER_LAYOUT = `external-benchmark-repo/
 export default function ContractPage() {
   return (
     <main className="container">
-      <p>
-        <Link href="/">← Back to home</Link>
-      </p>
-
       <h1>Benchmark Repo Contract (v1)</h1>
       <p className="subtle">
         External benchmark repositories must expose a minimal manifest that Chimera Core can understand. This step
@@ -50,6 +45,7 @@ export default function ContractPage() {
 
       <section className="contract-section" aria-label="Sample benchmark manifest">
         <h2>Sample manifest</h2>
+        <p className="subtle">This example is formatted for readability and mirrors the required v1 fields.</p>
         <pre className="contract-code-block">
           <code>{JSON.stringify(EXTERNAL_BENCHMARK_MANIFEST_EXAMPLE, null, 2)}</code>
         </pre>

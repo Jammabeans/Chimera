@@ -13,6 +13,8 @@ const BENCHMARK_TRUST_MODES = ["allowlisted", "review-required"] as const;
 
 const BENCHMARK_STATUSES = ["example", "active", "disabled"] as const;
 
+const BENCHMARK_SYNC_MODES = ["manual"] as const;
+
 function isNonEmptyString(value: string): boolean {
   return value.trim().length > 0;
 }
@@ -64,14 +66,25 @@ function parseStatus(entry: Record<string, unknown>): BenchmarkRegistryEntry["st
   return value as BenchmarkRegistryEntry["status"];
 }
 
+function parseSyncMode(entry: Record<string, unknown>): BenchmarkRegistryEntry["syncMode"] {
+  const value = entry.syncMode;
+
+  if (typeof value !== "string" || !BENCHMARK_SYNC_MODES.includes(value as BenchmarkRegistryEntry["syncMode"])) {
+    throw new Error("Invalid benchmark registry entry: unsupported 'syncMode'.");
+  }
+
+  return value as BenchmarkRegistryEntry["syncMode"];
+}
+
 function validateRegistryEntry(entry: BenchmarkRegistryEntry): void {
   const requiredStringFields: Array<keyof BenchmarkRegistryEntry> = [
     "id",
     "name",
     "description",
-    "repoUrl",
+    "approvedRepoUrl",
     "defaultRef",
     "entrypoint",
+    "syncMode",
   ];
 
   for (const field of requiredStringFields) {
@@ -96,9 +109,10 @@ function validateRegistry(rawEntries: unknown): readonly BenchmarkRegistryEntry[
       name: parseRequiredString(rawEntry, "name"),
       description: parseRequiredString(rawEntry, "description"),
       weaknessCategory: parseWeaknessCategory(rawEntry),
-      repoUrl: parseRequiredString(rawEntry, "repoUrl"),
+      approvedRepoUrl: parseRequiredString(rawEntry, "approvedRepoUrl"),
       defaultRef: parseRequiredString(rawEntry, "defaultRef"),
       entrypoint: parseRequiredString(rawEntry, "entrypoint"),
+      syncMode: parseSyncMode(rawEntry),
       trustMode: parseTrustMode(rawEntry),
       status: parseStatus(rawEntry),
     };

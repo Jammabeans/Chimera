@@ -8,6 +8,8 @@ export type BenchmarkTrustMode = "allowlisted" | "review-required";
 
 export type BenchmarkStatus = "example" | "active" | "disabled";
 
+export type BenchmarkSyncMode = "manual";
+
 export interface BenchmarkMetadata {
   id: string;
   name: string;
@@ -16,9 +18,10 @@ export interface BenchmarkMetadata {
 }
 
 export interface BenchmarkRegistryEntry extends BenchmarkMetadata {
-  repoUrl: string;
+  approvedRepoUrl: string;
   defaultRef: string;
   entrypoint: string;
+  syncMode: BenchmarkSyncMode;
   trustMode: BenchmarkTrustMode;
   status: BenchmarkStatus;
 }

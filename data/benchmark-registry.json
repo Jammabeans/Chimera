@@ -4,9 +4,10 @@
     "name": "State Trace",
     "description": "Tracks hidden or long-horizon state consistency across a multi-turn interaction.",
     "weaknessCategory": "state-trace",
-    "repoUrl": "https://github.com/chimera-benchmarks/state-trace",
+    "approvedRepoUrl": "https://github.com/chimera-benchmarks/state-trace",
     "defaultRef": "main",
     "entrypoint": "benchmarks/state-trace/index.ts",
+    "syncMode": "manual",
     "trustMode": "allowlisted",
     "status": "example"
   },
@@ -15,9 +16,10 @@
     "name": "Rewrite Chain",
     "description": "Measures whether iterative rewrites preserve constraints while improving quality.",
     "weaknessCategory": "rewrite-chain",
-    "repoUrl": "https://github.com/chimera-benchmarks/rewrite-chain",
+    "approvedRepoUrl": "https://github.com/chimera-benchmarks/rewrite-chain",
     "defaultRef": "main",
     "entrypoint": "benchmarks/rewrite-chain/index.ts",
+    "syncMode": "manual",
     "trustMode": "review-required",
     "status": "example"
   },
@@ -26,9 +28,10 @@
     "name": "Decoy Navigation",
     "description": "Evaluates resilience against distractor instructions and decoy objective shifts.",
     "weaknessCategory": "decoy-navigation",
-    "repoUrl": "https://github.com/chimera-benchmarks/decoy-nav",
+    "approvedRepoUrl": "https://github.com/chimera-benchmarks/decoy-nav",
     "defaultRef": "main",
     "entrypoint": "benchmarks/decoy-nav/index.ts",
+    "syncMode": "manual",
     "trustMode": "allowlisted",
     "status": "example"
   }

@@ -44,10 +44,10 @@ export default function BenchmarkDetailPage({ params }: BenchmarkDetailPageProps
           <dd>{benchmark.weaknessCategory}</dd>
         </div>
         <div>
-          <dt>Repo URL</dt>
+          <dt>Approved Repo URL</dt>
           <dd>
-            <a href={benchmark.repoUrl} target="_blank" rel="noreferrer">
-              {benchmark.repoUrl}
+            <a href={benchmark.approvedRepoUrl} target="_blank" rel="noreferrer">
+              {benchmark.approvedRepoUrl}
             </a>
           </dd>
         </div>

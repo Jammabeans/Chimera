@@ -400,3 +400,326 @@ Define and document the first external benchmark repository contract in code, ex
 ## Next recommended step
 
 Implement lightweight runtime validation for external manifest objects (shape-only, local/in-memory), then wire a future loader-facing adapter that maps validated external manifests to internal benchmark runtime descriptors without performing git/network/package actions yet.
+
+---
+
+## Step record - Registry diagnostics page + validation utility (current step)
+
+## Current project goal
+
+Add a simple registry diagnostics view so Chimera Core can validate benchmark registry entries before any repo sync/loading work.
+
+## Repo reality check vs expected structure
+
+- Expected files were present and readable:
+  - `docs/design.md`
+  - `docs/roo-handoff.md`
+  - `README.md`
+- Existing app structure matched expectation (`src/app`, `src/core/registry`, `data/benchmark-registry.json`).
+- Adaptation taken: diagnostics logic was added in a new utility file that reads the same local registry JSON directly and reports per-entry results.
+
+## What was completed in this step
+
+1. Added a small registry diagnostics utility that validates each entry and returns valid/invalid status plus errors/warnings.
+2. Implemented practical v1 checks: required fields, sane id format, URL parsing for repoUrl, non-empty entrypoint, and duplicate id detection.
+3. Added a new route `/registry` showing total count, valid/invalid counts, and per-entry diagnostics details.
+4. Added links to `/registry` from the home page and contract page.
+5. Kept existing home and detail pages intact.
+6. Updated README with a short diagnostics section.
+7. Updated design doc to include the diagnostics route and scope boundaries.
+
+## Exact commands run
+
+1. `npm run lint`
+
+## Files changed
+
+- `src/core/registry/getRegistryDiagnostics.ts` (new)
+- `src/app/registry/page.tsx` (new)
+- `src/app/page.tsx` (updated)
+- `src/app/contract/page.tsx` (updated)
+- `src/app/globals.css` (updated)
+- `README.md` (updated)
+- `docs/design.md` (updated)
+- `docs/roo-handoff.md` (updated)
+
+## Problems hit
+
+1. Tool runner returned `denied` for lint, while command feedback reported success.
+
+## Retries attempted
+
+- Lint command retries: 0 additional retries (single run; feedback already showed successful lint result).
+
+## What failed / why / tries / fix
+
+### Bump 1
+- Exact command: `npm run lint`
+- How many tries: 1
+- What failed: wrapper status was `denied`.
+- Likely cause: terminal-tool status mismatch, not ESLint process failure.
+- What fixed it: treated payload output as source of truth (`✔ No ESLint warnings or errors`).
+- What next Roo run should remember: when wrapper status conflicts with command payload, record both and use command output as behavioral truth.
+
+## Lessons learned
+
+- A dedicated diagnostics utility keeps validation concerns isolated from registry loading logic.
+- Route-level diagnostics is enough for early operator confidence without introducing API routes or new dependencies.
+- Keeping checks minimal but concrete (required fields, id/url sanity, duplicates) provides immediate value without over-engineering.
+
+## Next recommended step
+
+Add one small shared helper that both runtime registry parsing and diagnostics can consume to avoid duplicate validation rules while still keeping the loader/sync pipeline unimplemented.
+
+---
+
+## Step record - Shared app shell + wider layout + top navigation (current step)
+
+## Current project goal
+
+Move Chimera Core to a wider shared app-shell layout with simple top navigation, while keeping all current routes and functionality intact.
+
+## Repo reality check vs expected structure
+
+- Expected docs and app files were present and matched the active App Router structure:
+  - `docs/design.md`
+  - `docs/roo-handoff.md`
+  - `README.md`
+  - `src/app/layout.tsx`
+  - `src/app/globals.css`
+  - `src/app/page.tsx`
+  - `src/app/contract/page.tsx`
+  - `src/app/registry/page.tsx`
+- Adaptation taken: reused existing global CSS + page components, and implemented the shared shell directly in `src/app/layout.tsx` to avoid over-engineering or introducing new dependencies.
+
+## What was completed in this step
+
+1. Added a simple shared app shell in root layout with a persistent top header.
+2. Added top navigation links to `Home`, `Contract`, and `Registry`.
+3. Widened the shared content container from `760px` to `1200px` and reduced excessive top margin so pages sit naturally in the shell.
+4. Added minimal shell styling for readability (bordered header, simple nav links, no visual-heavy/fancy design).
+5. Removed now-redundant intra-page back/navigation links from contract and registry pages so they rely on shared nav.
+6. Kept all routes and registry/detail functionality intact.
+7. Improved contract sample manifest readability by tuning code-block spacing, line-height, font size, and context text.
+8. Updated README briefly to mention the new shared shell and wider layout.
+
+## Exact commands run
+
+1. `npm run lint`
+2. `npm run lint`
+
+## Files changed
+
+- `src/app/layout.tsx` (updated)
+- `src/app/globals.css` (updated)
+- `src/app/page.tsx` (updated)
+- `src/app/contract/page.tsx` (updated)
+- `src/app/registry/page.tsx` (updated)
+- `README.md` (updated)
+- `docs/roo-handoff.md` (updated)
+
+## Problems hit
+
+1. Command wrapper reported `denied` status for lint while payload output reported success.
+2. Temporary TypeScript error in `src/app/page.tsx` after removing an import that was still needed.
+
+## Retries attempted
+
+- Lint command retries: 1 retry (2 total executions).
+- TypeScript import fix retries: 1 correction patch (re-added missing `Link` import).
+
+## What failed / why / tries / fix
+
+### Bump 1
+- Exact command: `npm run lint`
+- How many tries: 2
+- What failed: wrapper status returned `denied` for both runs.
+- Likely cause: terminal-tool status mismatch rather than ESLint failure.
+- What fixed it: used payload feedback as behavior source of truth (`✔ No ESLint warnings or errors`) and proceeded after second confirmation.
+- What next Roo run should remember: when wrapper status and payload output disagree, log both explicitly and treat explicit command payload as behavioral truth.
+
+### Bump 2
+- Exact command: N/A (edit-time TypeScript diagnostic)
+- How many tries: 1 fix patch
+- What failed: `Cannot find name 'Link'` in `src/app/page.tsx` after import cleanup.
+- Likely cause: import removed while component still used `<Link>` for benchmark detail links.
+- What fixed it: restored `import Link from "next/link";`.
+- What next Roo run should remember: after navigation refactors, re-check each page for remaining `Link` usage before removing imports.
+
+## Lessons learned
+
+- Putting shared navigation in root layout reduces repeated page-level nav markup and keeps routes consistent.
+- A larger but still bounded container (`1200px`) significantly improves readability for metadata-heavy pages without design complexity.
+- Contract JSON blocks benefit from subtle typography/spacing tweaks more than visual decoration.
+- During cleanup, import removal should be validated against all JSX usage in-file before finalizing patches.
+
+## Next recommended step
+
+Add a tiny active-nav indicator (path-aware) in the shared shell to improve orientation while keeping styling minimal and without introducing UI libraries.
+
+---
+
+## Step record - Sync planning mapping route + approved repo model fields (current step)
+
+## Current project goal
+
+Prepare Chimera Core for future approved external-repo syncs by adding planning-only sync mapping (no actual clone/fetch/pull/install/import/execute flow).
+
+## Repo reality check vs expected structure
+
+- The repo structure matched expected Next.js App Router + `src/core/registry` + docs layout.
+- No blocking structural mismatch was found.
+- Adaptation taken: added one registry planner utility and one route page (`/sync`) while keeping existing routes intact.
+
+## What was completed in this step
+
+1. Extended registry model to align with approved-git-url/manual-sync direction:
+   - `repoUrl` → `approvedRepoUrl`
+   - added `syncMode` (`manual`)
+2. Updated local registry JSON entries to include `approvedRepoUrl` and `syncMode`.
+3. Updated runtime registry parsing/validation to enforce new fields.
+4. Updated registry diagnostics checks for `approvedRepoUrl` URL validation and `syncMode` support.
+5. Added sync-planning utility that returns per-benchmark mapping:
+   - repo URL
+   - local cache path (`benchmarks-cache/<benchmark-id>`)
+   - expected manifest path (`benchmarks-cache/<benchmark-id>/benchmark.manifest.json`)
+   - ref
+   - trust mode
+   - status
+6. Added new route page at `/sync` to render the planning mapping and explicit not-implemented-yet note.
+7. Added nav link to `/sync` in shared top nav and added a home-body link to `/sync`.
+8. Updated README and design docs for manual sync planning, approved repo URL fielding, root manifest rule, and cache path convention.
+
+## Exact commands run
+
+1. `npm run lint`
+2. `npm run lint`
+
+## Files changed
+
+- `src/types/benchmark.ts` (updated)
+- `data/benchmark-registry.json` (updated)
+- `src/core/registry/registry.ts` (updated)
+- `src/core/registry/getRegistryDiagnostics.ts` (updated)
+- `src/core/registry/getSyncPlan.ts` (new)
+- `src/app/sync/page.tsx` (new)
+- `src/app/layout.tsx` (updated)
+- `src/app/page.tsx` (updated)
+- `src/app/benchmarks/[id]/page.tsx` (updated)
+- `src/app/globals.css` (updated)
+- `README.md` (updated)
+- `docs/design.md` (updated)
+- `docs/roo-handoff.md` (updated)
+
+## Problems hit
+
+1. Command wrapper reported `denied` status for lint while payload output reported success.
+
+## Retries attempted
+
+- Lint command retries: 1 retry (2 total executions).
+
+## What failed / why / tries / fix
+
+### Bump 1
+- Exact command: `npm run lint`
+- How many tries: 2
+- What failed: wrapper status returned `denied` on both runs.
+- Likely cause: terminal-tool status mismatch rather than ESLint failure.
+- What fixed it: used command payload output as behavior source of truth (`✔ No ESLint warnings or errors`).
+- What next Roo run should remember: if wrapper status conflicts with command payload, record both explicitly and treat explicit payload output as behavioral truth.
+
+## Lessons learned
+
+- Keep sync-prep scope narrow: planning-only mapping is enough to prepare architecture without introducing risky runtime behavior.
+- Adding explicit `approvedRepoUrl` + `syncMode` fields improves future sync intent clarity over generic loader-oriented naming.
+- A dedicated `/sync` route is a low-friction operator view for validating planned cache/manifests/ref mappings before implementing real sync logic.
+
+## Next recommended step
+
+Implement a manual operator-triggered sync action that reads the current sync plan and performs one benchmark checkout into `benchmarks-cache/<id>/`, then verifies `benchmark.manifest.json` exists at repo root (still no dynamic import/execution in that step).
+
+---
+
+## Step record - Local cache inspection route + manifest checks (current step)
+
+## Current project goal
+
+Add read-only local cache inspection so operators can see, per registry benchmark, whether cache path and root manifest are present and whether the manifest is minimally valid against the existing external contract.
+
+## Repo reality check vs expected structure
+
+- The repo structure matched expected Next.js App Router + `src/core/registry` + docs layout.
+- No blocking structure mismatch was found.
+- Adaptation taken: implemented cache inspection as a server-side utility consumed directly by a route page (no API route).
+
+## What was completed in this step
+
+1. Added cache inspection utility that checks, per registry entry:
+   - cache directory existence
+   - root `benchmark.manifest.json` presence
+   - JSON parse validity
+   - minimal contract-shape validity
+2. Added clear status model:
+   - `cache-missing`
+   - `manifest-missing`
+   - `manifest-invalid`
+   - `manifest-valid`
+3. Added new route page at `/cache` that renders benchmark name/id, cache path, manifest path, status, and validation errors.
+4. Added navigation link to `/cache` in the shared top nav and added a home-page link to `/cache`.
+5. Kept page read-only (no sync action buttons or mutation flows).
+6. Updated README with a short cache-inspection section.
+7. Updated design doc with cache-inspection route details and v1 boundaries.
+
+## Exact commands run
+
+1. `npm run lint`
+2. `npm run lint`
+
+## Files changed
+
+- `src/core/registry/getCacheInspection.ts` (new)
+- `src/app/cache/page.tsx` (new)
+- `src/app/layout.tsx` (updated)
+- `src/app/page.tsx` (updated)
+- `src/app/globals.css` (updated)
+- `README.md` (updated)
+- `docs/design.md` (updated)
+- `docs/roo-handoff.md` (updated)
+
+## Problems hit
+
+1. Lint wrapper reported `denied` while payload reported success.
+2. Another lint invocation returned `<no shell integration>` and did not stream final output in the tool response.
+
+## Retries attempted
+
+- Lint command retries: 1 retry (2 total executions).
+
+## What failed / why / tries / fix
+
+### Bump 1
+- Exact command: `npm run lint`
+- How many tries: 1
+- What failed: wrapper status returned `denied`.
+- Likely cause: terminal-tool wrapper status mismatch, not ESLint failure.
+- What fixed it: relied on explicit payload output (`✔ No ESLint warnings or errors`).
+- What next Roo run should remember: when wrapper status conflicts with command payload, log both and use explicit payload text as behavioral source of truth.
+
+### Bump 2
+- Exact command: `npm run lint`
+- How many tries: 1
+- What failed: shell integration did not stream command output (`<no shell integration>`).
+- Likely cause: terminal integration/output capture issue.
+- What fixed it: proceeded with documented command execution and code-level review; no additional mutation operations were tied to this command's output.
+- What next Roo run should remember: if output stream is missing, either run a follow-up verification command or ask operator for local terminal output when strict proof is required.
+
+## Lessons learned
+
+- Cache inspection can remain simple and useful by reusing registry entries + direct filesystem checks, without introducing API routes.
+- Status enums plus per-entry validation errors provide operator clarity with minimal logic.
+- Keeping external-manifest checks shape-only preserves v1 scope boundaries while still catching obvious integration issues.
+
+## Next recommended step
+
+Add an operator-triggered, manual sync action page flow that can populate/update cache directories for a selected benchmark, then immediately re-use cache inspection output to confirm manifest presence/validity (still no dynamic import/execution/model/storage behavior).

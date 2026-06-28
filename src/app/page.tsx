@@ -8,8 +8,12 @@ export default function HomePage() {
     <main className="container">
       <h1>Chimera Core</h1>
       <p>Browser-based benchmark host app (core web app).</p>
-      <p>
-        <Link href="/contract">View benchmark repo contract (v1)</Link>
+      <p className="subtle">Use the top navigation to switch between home, contract, registry, and sync views.</p>
+      <p className="subtle">
+        Planned sync mapping is available at <Link href="/sync">/sync</Link> (manual sync plan only, no sync execution).
+      </p>
+      <p className="subtle">
+        Local cache inspection is available at <Link href="/cache">/cache</Link> (read-only status and manifest checks).
       </p>
 
       <section aria-label="Benchmark Registry" className="registry-section">
@@ -50,10 +54,10 @@ export default function HomePage() {
                   <dd>{benchmark.status}</dd>
                 </div>
                 <div>
-                  <dt>Repo URL</dt>
+                  <dt>Approved Repo URL</dt>
                   <dd>
-                    <a href={benchmark.repoUrl} target="_blank" rel="noreferrer">
-                      {benchmark.repoUrl}
+                    <a href={benchmark.approvedRepoUrl} target="_blank" rel="noreferrer">
+                      {benchmark.approvedRepoUrl}
                     </a>
                   </dd>
                 </div>

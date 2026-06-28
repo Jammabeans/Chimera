@@ -11,12 +11,51 @@ body {
   margin: 0;
   padding: 0;
   font-family: Arial, Helvetica, sans-serif;
+  background: #ffffff;
+  color: #1b1b1b;
 }
 
 .container {
-  max-width: 760px;
-  margin: 4rem auto;
-  padding: 0 1rem;
+  max-width: 1200px;
+  margin: 2rem auto 3rem;
+  padding: 0 1.25rem;
+}
+
+.app-shell-header {
+  border-bottom: 1px solid #e8e8e8;
+  background: #fff;
+}
+
+.app-shell-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.85rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.app-shell-brand {
+  margin: 0;
+  font-weight: 700;
+  color: #101010;
+}
+
+.app-shell-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.app-shell-nav a {
+  color: #1f4fbf;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.app-shell-nav a:hover {
+  text-decoration: underline;
 }
 
 .registry-section {
@@ -37,11 +76,161 @@ body {
 }
 
 .contract-code-block {
+  border: 1px solid #d9dde6;
+  border-radius: 8px;
+  padding: 1rem 1.1rem;
+  background: #f7f9fc;
+  overflow-x: auto;
+  line-height: 1.5;
+  font-size: 0.92rem;
+}
+
+.registry-diagnostics-summary {
   border: 1px solid #ddd;
   border-radius: 8px;
   padding: 0.85rem;
-  background: #f8f8f8;
-  overflow-x: auto;
+  background: #fafafa;
+}
+
+.registry-diagnostics-summary p {
+  margin: 0.2rem 0;
+}
+
+.registry-diagnostics-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.registry-diagnostics-item {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.85rem;
+  background: #fff;
+}
+
+.sync-plan-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.cache-inspection-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.cache-inspection-card {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 1rem;
+  background: #fff;
+}
+
+.cache-inspection-card h2 {
+  margin: 0 0 0.85rem 0;
+}
+
+.cache-inspection-card h3 {
+  margin: 0.9rem 0 0.35rem;
+  font-size: 0.95rem;
+}
+
+.cache-inspection-card dl {
+  margin: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.cache-inspection-card dl > div {
+  display: grid;
+  grid-template-columns: minmax(140px, 220px) 1fr;
+  gap: 0.6rem;
+}
+
+.cache-inspection-card dt {
+  font-weight: 600;
+  color: #222;
+}
+
+.cache-inspection-card dd {
+  margin: 0;
+  color: #333;
+}
+
+.sync-plan-card {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 1rem;
+  background: #fff;
+}
+
+.sync-plan-card h2 {
+  margin: 0 0 0.85rem 0;
+}
+
+.sync-plan-card dl {
+  margin: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.sync-plan-card dl > div {
+  display: grid;
+  grid-template-columns: minmax(140px, 220px) 1fr;
+  gap: 0.6rem;
+}
+
+.sync-plan-card dt {
+  font-weight: 600;
+  color: #222;
+}
+
+.sync-plan-card dd {
+  margin: 0;
+  color: #333;
+}
+
+.sync-plan-card a {
+  color: #1f4fbf;
+  text-decoration: none;
+}
+
+.sync-plan-card a:hover {
+  text-decoration: underline;
+}
+
+.registry-diagnostics-item h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.registry-diagnostics-item h3 {
+  margin: 0.8rem 0 0.35rem;
+  font-size: 0.95rem;
+}
+
+.diag-valid {
+  color: #1d7a35;
+}
+
+.diag-invalid {
+  color: #9f1212;
+}
+
+.diag-error {
+  color: #9f1212;
+}
+
+.diag-warning {
+  color: #8a5c00;
 }
 
 .subtle {
@@ -137,7 +326,14 @@ body {
 }
 
 @media (max-width: 640px) {
+  .app-shell-inner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .benchmark-card dl > div,
+  .cache-inspection-card dl > div,
+  .sync-plan-card dl > div,
   .benchmark-detail-list > div {
     grid-template-columns: 1fr;
     gap: 0.35rem;
