@@ -28,35 +28,99 @@ body {
   margin-bottom: 1rem;
 }
 
-.registry-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.92rem;
+.benchmark-card-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
 }
 
-.registry-table th,
-.registry-table td {
-  text-align: left;
-  padding: 0.55rem;
+.benchmark-card {
   border: 1px solid #ddd;
-  vertical-align: top;
+  border-radius: 10px;
+  padding: 1rem;
+  background: #fff;
 }
 
-.registry-table th {
-  background: #f6f7f9;
+.benchmark-card h3 {
+  margin: 0 0 0.85rem 0;
 }
 
-.registry-table code {
+.benchmark-card dl {
+  margin: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.benchmark-card dl > div {
+  display: grid;
+  grid-template-columns: minmax(120px, 180px) 1fr;
+  gap: 0.6rem;
+}
+
+.benchmark-card dt {
+  font-weight: 600;
+  color: #222;
+}
+
+.benchmark-card dd {
+  margin: 0;
+  color: #333;
+}
+
+.benchmark-card code {
   font-size: 0.85rem;
 }
 
-.registry-table a {
+.benchmark-card-link-row {
+  margin: 1rem 0 0;
+}
+
+.benchmark-card-link-row a,
+.benchmark-card a {
   color: #1f4fbf;
   text-decoration: none;
 }
 
-.registry-table a:hover {
+.benchmark-card-link-row a:hover,
+.benchmark-card a:hover {
   text-decoration: underline;
+}
+
+.benchmark-detail-list {
+  margin-top: 1.5rem;
+  border: 1px solid #ddd;
+}
+
+.benchmark-detail-list > div {
+  display: grid;
+  grid-template-columns: minmax(140px, 220px) 1fr;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-bottom: 1px solid #eee;
+}
+
+.benchmark-detail-list > div:last-child {
+  border-bottom: none;
+}
+
+.benchmark-detail-list dt {
+  font-weight: 600;
+  color: #222;
+}
+
+.benchmark-detail-list dd {
+  margin: 0;
+  color: #333;
+}
+
+@media (max-width: 640px) {
+  .benchmark-card dl > div,
+  .benchmark-detail-list > div {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
 }
 
 h1 {

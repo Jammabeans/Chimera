@@ -1,7 +1,67 @@
 import type { BenchmarkRegistryEntry } from "@/types/benchmark";
 
+import rawRegistry from "../../../data/benchmark-registry.json";
+
+const BENCHMARK_WEAKNESS_CATEGORIES = [
+  "state-trace",
+  "rewrite-chain",
+  "decoy-navigation",
+  "other",
+] as const;
+
+const BENCHMARK_TRUST_MODES = ["allowlisted", "review-required"] as const;
+
+const BENCHMARK_STATUSES = ["example", "active", "disabled"] as const;
+
 function isNonEmptyString(value: string): boolean {
   return value.trim().length > 0;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function parseRequiredString(entry: Record<string, unknown>, field: string): string {
+  const value = entry[field];
+
+  if (typeof value !== "string" || !isNonEmptyString(value)) {
+    throw new Error(`Invalid benchmark registry entry: empty or missing '${field}'.`);
+  }
+
+  return value;
+}
+
+function parseWeaknessCategory(entry: Record<string, unknown>): BenchmarkRegistryEntry["weaknessCategory"] {
+  const value = entry.weaknessCategory;
+
+  if (
+    typeof value !== "string" ||
+    !BENCHMARK_WEAKNESS_CATEGORIES.includes(value as BenchmarkRegistryEntry["weaknessCategory"])
+  ) {
+    throw new Error("Invalid benchmark registry entry: unsupported 'weaknessCategory'.");
+  }
+
+  return value as BenchmarkRegistryEntry["weaknessCategory"];
+}
+
+function parseTrustMode(entry: Record<string, unknown>): BenchmarkRegistryEntry["trustMode"] {
+  const value = entry.trustMode;
+
+  if (typeof value !== "string" || !BENCHMARK_TRUST_MODES.includes(value as BenchmarkRegistryEntry["trustMode"])) {
+    throw new Error("Invalid benchmark registry entry: unsupported 'trustMode'.");
+  }
+
+  return value as BenchmarkRegistryEntry["trustMode"];
+}
+
+function parseStatus(entry: Record<string, unknown>): BenchmarkRegistryEntry["status"] {
+  const value = entry.status;
+
+  if (typeof value !== "string" || !BENCHMARK_STATUSES.includes(value as BenchmarkRegistryEntry["status"])) {
+    throw new Error("Invalid benchmark registry entry: unsupported 'status'.");
+  }
+
+  return value as BenchmarkRegistryEntry["status"];
 }
 
 function validateRegistryEntry(entry: BenchmarkRegistryEntry): void {
@@ -21,46 +81,44 @@ function validateRegistryEntry(entry: BenchmarkRegistryEntry): void {
   }
 }
 
-function validateRegistry(entries: readonly BenchmarkRegistryEntry[]): readonly BenchmarkRegistryEntry[] {
-  for (const entry of entries) {
-    validateRegistryEntry(entry);
+function validateRegistry(rawEntries: unknown): readonly BenchmarkRegistryEntry[] {
+  if (!Array.isArray(rawEntries)) {
+    throw new Error("Invalid benchmark registry: expected a top-level array.");
   }
 
-  return entries;
+  const parsedEntries: BenchmarkRegistryEntry[] = rawEntries.map((rawEntry) => {
+    if (!isRecord(rawEntry)) {
+      throw new Error("Invalid benchmark registry entry: expected an object.");
+    }
+
+    const parsedEntry: BenchmarkRegistryEntry = {
+      id: parseRequiredString(rawEntry, "id"),
+      name: parseRequiredString(rawEntry, "name"),
+      description: parseRequiredString(rawEntry, "description"),
+      weaknessCategory: parseWeaknessCategory(rawEntry),
+      repoUrl: parseRequiredString(rawEntry, "repoUrl"),
+      defaultRef: parseRequiredString(rawEntry, "defaultRef"),
+      entrypoint: parseRequiredString(rawEntry, "entrypoint"),
+      trustMode: parseTrustMode(rawEntry),
+      status: parseStatus(rawEntry),
+    };
+
+    validateRegistryEntry(parsedEntry);
+
+    return parsedEntry;
+  });
+
+  const seenIds = new Set<string>();
+
+  for (const entry of parsedEntries) {
+    if (seenIds.has(entry.id)) {
+      throw new Error(`Invalid benchmark registry: duplicate id '${entry.id}'.`);
+    }
+
+    seenIds.add(entry.id);
+  }
+
+  return parsedEntries;
 }
 
-export const LOCAL_BENCHMARK_REGISTRY: readonly BenchmarkRegistryEntry[] = validateRegistry([
-  {
-    id: "state-trace",
-    name: "State Trace",
-    description: "Tracks hidden or long-horizon state consistency across a multi-turn interaction.",
-    weaknessCategory: "state-trace",
-    repoUrl: "https://github.com/chimera-benchmarks/state-trace",
-    defaultRef: "main",
-    entrypoint: "benchmarks/state-trace/index.ts",
-    trustMode: "allowlisted",
-    status: "example",
-  },
-  {
-    id: "rewrite-chain",
-    name: "Rewrite Chain",
-    description: "Measures whether iterative rewrites preserve constraints while improving quality.",
-    weaknessCategory: "rewrite-chain",
-    repoUrl: "https://github.com/chimera-benchmarks/rewrite-chain",
-    defaultRef: "main",
-    entrypoint: "benchmarks/rewrite-chain/index.ts",
-    trustMode: "review-required",
-    status: "example",
-  },
-  {
-    id: "decoy-nav",
-    name: "Decoy Navigation",
-    description: "Evaluates resilience against distractor instructions and decoy objective shifts.",
-    weaknessCategory: "decoy-navigation",
-    repoUrl: "https://github.com/chimera-benchmarks/decoy-nav",
-    defaultRef: "main",
-    entrypoint: "benchmarks/decoy-nav/index.ts",
-    trustMode: "allowlisted",
-    status: "example",
-  },
-]);
+export const LOCAL_BENCHMARK_REGISTRY: readonly BenchmarkRegistryEntry[] = validateRegistry(rawRegistry);
