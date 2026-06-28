@@ -328,3 +328,75 @@ Make benchmark registry data config-driven via a local JSON file while preservin
 ## Next recommended step
 
 Add lightweight editability safeguards around the registry file (for example, documented field schema snippets and a tiny script-free contributor checklist in docs) while keeping runtime behavior metadata-only.
+
+---
+
+## Step record - External benchmark repo contract page + types (current step)
+
+## Current project goal
+
+Define and document the first external benchmark repository contract in code, expose it in the app via a dedicated page, and keep all loader/runtime integrations out of scope.
+
+## Repo reality check vs expected structure
+
+- Expected files were present and readable:
+  - `docs/design.md`
+  - `docs/roo-handoff.md`
+  - `README.md`
+- Existing app structure matched the Next.js App Router expectation (`src/app`, `src/core`, `src/types`, `data`).
+- Adaptation taken: created a new contract-specific type file to keep external-manifest contract separate from existing registry entry types.
+
+## What was completed in this step
+
+1. Added dedicated external benchmark manifest contract types in a separate file.
+2. Kept existing registry entry types unchanged/separate.
+3. Added a typed sample external manifest object for docs/demo display.
+4. Added a new route at `/contract` that explains required manifest fields.
+5. Displayed required fields, sample manifest JSON, and example external-repo folder layout on the contract page.
+6. Added a home-page link to the new contract page.
+7. Updated README with a new “Benchmark repo contract (v1)” section.
+8. Updated design doc with contract scope and boundaries.
+
+## Exact commands run
+
+1. `npm run lint`
+
+## Files changed
+
+- `src/types/externalBenchmarkContract.ts` (new)
+- `src/core/registry/externalBenchmarkManifestExample.ts` (new)
+- `src/app/contract/page.tsx` (new)
+- `src/app/page.tsx` (updated)
+- `src/app/globals.css` (updated)
+- `README.md` (updated)
+- `docs/design.md` (updated)
+- `docs/roo-handoff.md` (updated)
+
+## Problems hit
+
+1. Tool runner returned `denied` status for `npm run lint` while command feedback indicated success (`✔ No ESLint warnings or errors`).
+
+## Retries attempted
+
+- Lint command retries: 0 additional retries (single execution because feedback already showed successful lint result).
+
+## What failed / why / tries / fix
+
+### Bump 1
+- Exact command: `npm run lint`
+- How many tries: 1
+- What failed: command wrapper reported `denied` status.
+- Likely cause: terminal-tool status mismatch rather than an ESLint/runtime failure.
+- What fixed it: used command feedback payload as source of truth (`✔ No ESLint warnings or errors`).
+- What next Roo run should remember: if tool status and command output conflict, preserve both; treat explicit command output as behavioral truth and record the mismatch in handoff.
+
+## Lessons learned
+
+- Keeping contract types in a dedicated file prevents accidental coupling with registry ingestion types.
+- A static sample manifest object is a low-friction way to document contract shape in both code and UI.
+- Contract documentation route (`/contract`) improves contributor clarity before implementing loader/sync logic.
+- Scope boundaries stayed intact: no clone/install/import/execution/provider/storage code was added.
+
+## Next recommended step
+
+Implement lightweight runtime validation for external manifest objects (shape-only, local/in-memory), then wire a future loader-facing adapter that maps validated external manifests to internal benchmark runtime descriptors without performing git/network/package actions yet.

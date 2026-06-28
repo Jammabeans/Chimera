@@ -23,6 +23,27 @@ body {
   margin-top: 2rem;
 }
 
+.contract-section {
+  margin-top: 1.5rem;
+}
+
+.contract-field-list {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.contract-field-list li {
+  margin: 0.35rem 0;
+}
+
+.contract-code-block {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.85rem;
+  background: #f8f8f8;
+  overflow-x: auto;
+}
+
 .subtle {
   color: #555;
   margin-bottom: 1rem;

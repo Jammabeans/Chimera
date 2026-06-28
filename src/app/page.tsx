@@ -8,6 +8,9 @@ export default function HomePage() {
     <main className="container">
       <h1>Chimera Core</h1>
       <p>Browser-based benchmark host app (core web app).</p>
+      <p>
+        <Link href="/contract">View benchmark repo contract (v1)</Link>
+      </p>
 
       <section aria-label="Benchmark Registry" className="registry-section">
         <h2>Benchmark Registry (Local Examples)</h2>

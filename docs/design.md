@@ -35,6 +35,34 @@ Notes for this version:
 - `repoUrl`/`defaultRef`/`entrypoint` fields exist to support future external-repo loading.
 - No cloning, install, dynamic loading, execution, persistence, or provider/API calls are included yet.
 
+### External benchmark repo contract (v1)
+
+To prepare for separate benchmark repositories, Chimera Core now defines a minimal manifest contract distinct from registry entries.
+
+Required external manifest fields:
+
+- `id`
+- `name`
+- `version`
+- `description`
+- `weaknessCategory`
+- `supportedModes`
+- `entrypoint`
+- `levels`
+- `owner`
+
+Current contract artifacts:
+
+- Type contract: `src/types/externalBenchmarkContract.ts`
+- Example manifest object: `src/core/registry/externalBenchmarkManifestExample.ts`
+- Human-readable contract route: `/contract`
+
+Notes for this version:
+
+- Contract is intentionally minimal and loader-agnostic for v1.
+- No clone/install/dynamic-import/execution/model API/storage behavior is implemented in this step.
+- Registry entry types remain separate from external repo manifest types.
+
 ## Scoring/results UI (later)
 
 Scoring details, run history, and richer results views will be added in later iterations.
@@ -51,4 +79,5 @@ Scoring details, run history, and richer results views will be added in later it
 - The home route renders a card/list layout for benchmark entries.
 - Displayed fields include name, id, description, weakness category, trust mode, status, repo URL, and link to details.
 - UI includes an explicit note that benchmarks are external repos referenced by the registry file.
+- Home route links to `/contract` for the external benchmark repo requirements.
 

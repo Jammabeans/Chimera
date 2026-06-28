@@ -23,6 +23,35 @@ Chimera Core now includes a typed local benchmark registry for UI display and co
 - Unknown benchmark IDs render a clean route-level not-found page.
 - Detail pages are read-only metadata views only (no execution, loading, or persistence behavior).
 
+## Benchmark repo contract (v1)
+
+Chimera Core now defines a minimal external benchmark manifest contract that separate benchmark repos must provide.
+
+- Contract types are defined in [`ExternalBenchmarkManifest`](src/types/externalBenchmarkContract.ts:9) and related types in [`src/types/externalBenchmarkContract.ts`](src/types/externalBenchmarkContract.ts).
+- This contract is intentionally separate from registry entry types in [`BenchmarkRegistryEntry`](src/types/benchmark.ts:18).
+- A sample manifest object is provided in [`EXTERNAL_BENCHMARK_MANIFEST_EXAMPLE`](src/core/registry/externalBenchmarkManifestExample.ts:3).
+- A human-readable contract page is available at [`/contract`](src/app/contract/page.tsx).
+
+Required manifest fields for v1:
+
+- `id`
+- `name`
+- `version`
+- `description`
+- `weaknessCategory`
+- `supportedModes`
+- `entrypoint`
+- `levels`
+- `owner`
+
+Scope boundaries for this step:
+
+- No git cloning.
+- No package installation.
+- No dynamic import/execution logic.
+- No model API integration.
+- No database/storage setup.
+
 ## Install
 
 ```bash
