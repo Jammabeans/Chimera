@@ -21,6 +21,7 @@ export default function RootLayout({
               <p className="app-shell-brand">Chimera Core</p>
               <nav aria-label="Primary" className="app-shell-nav">
                 <Link href="/">Home</Link>
+                <Link href="/readiness">Readiness</Link>
                 <Link href="/contract">Contract</Link>
                 <Link href="/registry">Registry</Link>
                 <Link href="/sync">Sync</Link>

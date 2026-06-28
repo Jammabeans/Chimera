@@ -1,8 +1,11 @@
 import { getRegisteredBenchmarks } from "@/core/registry/getRegisteredBenchmarks";
+import { getBenchmarkReadiness } from "@/core/registry/getBenchmarkReadiness";
 import Link from "next/link";
 
 export default function HomePage() {
   const benchmarks = getRegisteredBenchmarks();
+  const readinessReport = getBenchmarkReadiness();
+  const readinessById = new Map(readinessReport.benchmarks.map((item) => [item.benchmarkId, item]));
 
   return (
     <main className="container">
@@ -14,6 +17,9 @@ export default function HomePage() {
       </p>
       <p className="subtle">
         Local cache inspection is available at <Link href="/cache">/cache</Link> (read-only status and manifest checks).
+      </p>
+      <p className="subtle">
+        Benchmark readiness status is available at <Link href="/readiness">/readiness</Link>.
       </p>
 
       <section aria-label="Benchmark Registry" className="registry-section">
@@ -29,7 +35,14 @@ export default function HomePage() {
         <ul className="benchmark-card-list">
           {benchmarks.map((benchmark) => (
             <li key={benchmark.id} className="benchmark-card">
-              <h3>{benchmark.name}</h3>
+              <h3 className="benchmark-card-title-row">
+                <span>{benchmark.name}</span>
+                {readinessById.get(benchmark.id)?.ready ? (
+                  <span className="readiness-badge readiness-badge-ready">Ready</span>
+                ) : (
+                  <span className="readiness-badge readiness-badge-not-ready">Not ready</span>
+                )}
+              </h3>
               <dl>
                 <div>
                   <dt>ID</dt>

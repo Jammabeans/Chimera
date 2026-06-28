@@ -4,7 +4,7 @@ Chimera Core is the browser-based host web app for the Chimera benchmark system.
 
 This repository contains only the core Next.js application. Benchmark implementations are planned to live in separate repositories and be loaded through a registry-driven workflow.
 
-- The app now uses a simple shared shell with a top navigation (`Home`, `Contract`, `Registry`, `Sync`, `Cache`) and a wider main content area for readability.
+- The app now uses a simple shared shell with a top navigation (`Home`, `Readiness`, `Contract`, `Registry`, `Sync`, `Cache`) and a wider main content area for readability.
 
 ## Benchmark registry (v1)
 
@@ -25,7 +25,10 @@ Chimera Core now includes a typed local benchmark registry for UI display and co
 - The home registry card/list links each benchmark to `/benchmarks/[id]`.
 - The detail page resolves entries from the same static registry by `id`.
 - Unknown benchmark IDs render a clean route-level not-found page.
-- Detail pages are read-only metadata views only (no execution, loading, or persistence behavior).
+- Detail pages now combine registry metadata with current local cache/readiness state.
+- Detail pages show cache status, manifest valid (`yes`/`no`), ready (`yes`/`no`), and a short status message.
+- When local cache has a valid manifest, detail pages also show a cached manifest preview (`id`, `name`, `version`, `weaknessCategory`, `supportedModes`, `level count`, `owner`).
+- Detail pages remain read-only (no execution, loading, or persistence behavior).
 
 ## Registry diagnostics page (v1)
 
@@ -83,6 +86,20 @@ Chimera Core now includes a read-only cache inspection view at `/cache` to check
 - The page displays benchmark name/id, cache path, manifest path, status, and validation errors.
 - When status is `manifest-valid`, the page also shows a parsed manifest preview (`id`, `name`, `version`, `weaknessCategory`, `supportedModes`, `level count`, `owner`).
 - Scope remains inspection-only by default. Sync mutation occurs only when explicitly triggered from `/sync`.
+
+## Benchmark readiness page (v1)
+
+Chimera Core now includes a benchmark readiness view at `/readiness` for a practical “can this benchmark be used yet?” signal.
+
+- Page route: [`/readiness`](src/app/readiness/page.tsx)
+- Shared utility: [`getBenchmarkReadiness()`](src/core/registry/getBenchmarkReadiness.ts:53)
+- Readiness is `true` only when all of the following are true:
+  - benchmark exists in the registry
+  - cache directory exists
+  - root manifest exists at `benchmark.manifest.json`
+  - manifest passes current cache inspection validation logic
+- Readiness report fields include benchmark id/name, cache status, manifest validity, ready boolean, readiness label, and a short readiness message.
+- Home page benchmark cards also include small readiness badges (`Ready` / `Not ready`) for quick scanning.
 
 ## Benchmark repo contract (v1)
 

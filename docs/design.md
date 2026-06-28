@@ -74,6 +74,13 @@ Scoring details, run history, and richer results views will be added in later it
 
 - A route-level benchmark detail page exists at `/benchmarks/[id]`.
 - The page reads from the same validated JSON-backed registry used by the home page.
+- The page now reuses existing cache-inspection and readiness utilities to include current local state alongside registry metadata.
+- Current local-state fields on details include:
+  - cache status
+  - manifest valid boolean
+  - ready boolean
+  - short readiness/status message
+- When cached manifest is valid, details also render a compact cached manifest preview (`id`, `name`, `version`, `weaknessCategory`, `supportedModes`, `level count`, `owner`).
 - Unknown IDs render a clean not-found experience for that route segment.
 - This remains metadata-only UI; no clone/install/provider/execution/storage behavior was added.
 
@@ -146,4 +153,28 @@ Scoring details, run history, and richer results views will be added in later it
   - `level count`
   - `owner`
 - This page remains read-only in v1. Sync mutation is only triggered explicitly from `/sync`.
+
+## Benchmark readiness route (current)
+
+- A route-level readiness page exists at `/readiness`.
+- It is powered by a shared utility: `src/core/registry/getBenchmarkReadiness.ts`.
+- Readiness is intentionally strict for v1 and is `true` only when:
+  - benchmark exists in the registry
+  - cache directory exists
+  - root `benchmark.manifest.json` exists
+  - manifest passes the existing cache-inspection validation checks
+- The readiness report returns practical fields per benchmark:
+  - benchmark id
+  - benchmark name
+  - cache status
+  - manifest valid boolean
+  - ready boolean
+  - short readiness label/message
+- `/readiness` renders:
+  - total benchmark count
+  - ready count
+  - not-ready count
+  - one row/card per benchmark with clear status text
+- The shared top nav includes `Readiness`.
+- The home page includes small readiness badges on benchmark cards for quick scanability.
 

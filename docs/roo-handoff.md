@@ -1168,3 +1168,185 @@ Update only the `decoy-nav` benchmark registry entry to the approved published r
 ## Next recommended step
 
 From `/sync`, run one manual sync for `decoy-nav`, then verify in `/cache` that `benchmarks-cache/decoy-nav/benchmark.manifest.json` exists and reports `manifest-valid` with expected preview fields.
+
+---
+
+## Step record - Benchmark readiness route + home badges (current step)
+
+## Current project goal
+
+Add benchmark readiness status to Chimera Core by introducing a shared readiness utility, a dedicated `/readiness` page, and compact readiness badges on home benchmark cards while preserving existing routes and behavior.
+
+## Repo reality check vs expected structure
+
+- Expected project structure and route files were present and usable:
+  - `README.md`
+  - `docs/design.md`
+  - `docs/roo-handoff.md`
+  - `data/benchmark-registry.json`
+  - `src/app/layout.tsx`
+  - `src/app/page.tsx`
+  - `src/core/registry/getCacheInspection.ts`
+- Adaptation taken: reused existing cache inspection logic directly by building readiness on top of `getCacheInspection()` (no new API routes, no new libraries, no background jobs).
+
+## What was completed in this step
+
+1. Added a shared readiness utility at `src/core/registry/getBenchmarkReadiness.ts`.
+2. Reused existing cache inspection status (`cache-missing` / `manifest-missing` / `manifest-invalid` / `manifest-valid`) as readiness input.
+3. Implemented readiness output fields per benchmark:
+   - benchmark id
+   - benchmark name
+   - cache status
+   - manifest valid boolean
+   - ready boolean
+   - short readiness label/message
+4. Added a new route page at `/readiness` with:
+   - total benchmark count
+   - ready count
+   - not-ready count
+   - one card per benchmark with clear readiness reasoning
+5. Added `Readiness` link to the shared top navigation.
+6. Added small `Ready`/`Not ready` badges on home benchmark cards.
+7. Updated README with a short benchmark readiness section.
+8. Updated design doc with readiness route and scope notes.
+
+## Exact commands run
+
+1. `npm run lint`
+2. `npm run build`
+3. `git status --short`
+
+## Files changed
+
+- `src/core/registry/getBenchmarkReadiness.ts` (new)
+- `src/app/readiness/page.tsx` (new)
+- `src/app/layout.tsx` (updated)
+- `src/app/page.tsx` (updated)
+- `src/app/globals.css` (updated)
+- `README.md` (updated)
+- `docs/design.md` (updated)
+- `docs/roo-handoff.md` (updated)
+
+## Problems hit
+
+1. Command wrapper returned `denied` status for all executed shell commands even when payload output showed success.
+
+## Retries attempted
+
+- Additional retries: 0
+- Reason: payload output for lint/build was explicit and successful on first attempt.
+
+## What failed / why / tries / fix
+
+### Bump 1
+- Exact commands:
+  - `npm run lint`
+  - `npm run build`
+  - `git status --short`
+- How many tries: 1 each
+- What failed: tool wrapper status reported `denied`.
+- Likely cause: terminal-tool wrapper status mismatch rather than process/runtime failure.
+- What fixed it: used explicit command payload output as source of truth:
+  - lint payload: `✔ No ESLint warnings or errors`
+  - build payload: `Compiled successfully`, `Linting and checking validity of types`, static generation including `/readiness`
+  - git payload: showed changed/new readiness files as expected
+- What next Roo run should remember: when wrapper status conflicts with detailed command payload output, record both and treat payload output as behavioral source of truth.
+
+## Lessons learned
+
+- Reusing `getCacheInspection()` keeps readiness logic consistent and avoids duplicated manifest/cache validation paths.
+- Readiness is operator-friendly when paired with a concise reason string, not only booleans/status codes.
+- Small in-card badges on home provide fast scanability without clutter or component over-engineering.
+
+## Next recommended step
+
+From `/sync`, run manual sync for any not-ready benchmark, then verify `/readiness` and `/cache` transition to ready/`manifest-valid` for that benchmark without changing current v1 scope boundaries.
+
+---
+
+## Step record - Benchmark detail page registry + cache/readiness state (current step)
+
+## Current project goal
+
+Upgrade benchmark detail pages so each `/benchmarks/[id]` view shows both registry metadata and current cached manifest/readiness state, while keeping scope read-only and avoiding execution/API/database/background-job work.
+
+## Repo reality check vs expected structure
+
+- Required files were present and readable:
+  - `README.md`
+  - `docs/design.md`
+  - `docs/roo-handoff.md`
+  - `data/benchmark-registry.json`
+- Existing utilities/routes expected for reuse were present:
+  - `src/core/registry/getCacheInspection.ts`
+  - `src/core/registry/getBenchmarkReadiness.ts`
+  - `src/core/registry/getBenchmarkById.ts`
+  - `src/app/benchmarks/[id]/page.tsx`
+  - `src/app/benchmarks/[id]/not-found.tsx`
+- Adaptation taken: added one small shared detail-state helper to avoid duplicating page logic and reused existing cache/readiness utility outputs.
+
+## What was completed in this step
+
+1. Added a small shared helper at `src/core/registry/getBenchmarkDetailState.ts` that composes:
+   - registry lookup (`getBenchmarkById`)
+   - cache inspection (`getCacheInspection`)
+   - readiness report (`getBenchmarkReadiness`)
+2. Updated `/benchmarks/[id]` page to keep existing registry metadata display and add current local status fields:
+   - cache status
+   - manifest valid (`yes`/`no`)
+   - ready (`yes`/`no`)
+   - short status message
+3. Added a conditional **Cached Manifest Preview** section on benchmark detail pages when cached manifest is valid and preview data exists.
+4. Preserved route-segment not-found behavior for unknown benchmark ids.
+5. Kept layout simple by reusing existing detail list markup/CSS patterns.
+6. Updated `README.md` benchmark-detail section to document the new combined registry+local-state detail behavior.
+7. Updated `docs/design.md` benchmark-detail section to reflect utility reuse and manifest-preview behavior.
+
+## Exact commands run
+
+1. `npm run lint`
+2. `git status --short`
+3. `npm run build`
+
+## Files changed
+
+- `src/core/registry/getBenchmarkDetailState.ts` (new)
+- `src/app/benchmarks/[id]/page.tsx` (updated)
+- `README.md` (updated)
+- `docs/design.md` (updated)
+- `docs/roo-handoff.md` (updated)
+
+## Problems hit
+
+1. Command wrapper status returned `denied` for all executed commands while payload output indicated successful command execution.
+
+## Retries attempted
+
+- Additional retries: 0
+- Reason: command payload output for lint/build was explicit and successful on first attempt.
+
+## What failed / why / tries / fix
+
+### Bump 1
+- Exact commands:
+  - `npm run lint`
+  - `git status --short`
+  - `npm run build`
+- How many tries: 1 each
+- What failed: tool wrapper status reported `denied`.
+- Likely cause: terminal-tool wrapper status mismatch rather than process/runtime failure.
+- What fixed it: used explicit command payload output as behavior source of truth:
+  - lint payload: `✔ No ESLint warnings or errors`
+  - build payload: `Compiled successfully`, `Linting and checking validity of types`, route generation including `/benchmarks/[id]`
+  - git payload: returned expected changed/new files
+- What next Roo run should remember: when wrapper status conflicts with explicit command payload output, record both and treat payload output as behavioral source of truth.
+
+## Lessons learned
+
+- Detail pages can remain simple while still being operationally useful by composing existing utility outputs instead of adding new data sources.
+- A single focused helper (`getBenchmarkDetailState`) keeps route code readable and avoids duplicating cache/readiness interpretation logic.
+- Keeping not-found logic untouched reduces regression risk while extending dynamic-route content.
+
+## Next recommended step
+
+Add non-blocking consistency hints on benchmark detail pages (for example, warning if cached manifest id or weakness category differs from registry metadata), while keeping sync/execution/API/database/background-job behavior out of scope.

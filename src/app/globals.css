@@ -330,6 +330,97 @@ body {
   margin: 0 0 0.85rem 0;
 }
 
+.benchmark-card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.readiness-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.readiness-badge-ready {
+  background: #eaf7ee;
+  color: #165c2a;
+  border: 1px solid #b8e0c4;
+}
+
+.readiness-badge-not-ready {
+  background: #fff8e8;
+  color: #7f5200;
+  border: 1px solid #f0dbac;
+}
+
+.readiness-summary {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.85rem;
+  background: #fafafa;
+}
+
+.readiness-summary p {
+  margin: 0.2rem 0;
+}
+
+.readiness-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.readiness-card {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 1rem;
+  background: #fff;
+}
+
+.readiness-card h2 {
+  margin: 0 0 0.85rem 0;
+}
+
+.readiness-card dl {
+  margin: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.readiness-card dl > div {
+  display: grid;
+  grid-template-columns: minmax(140px, 220px) 1fr;
+  gap: 0.6rem;
+}
+
+.readiness-card dt {
+  font-weight: 600;
+  color: #222;
+}
+
+.readiness-card dd {
+  margin: 0;
+  color: #333;
+}
+
+.readiness-status-ready {
+  color: #1d7a35;
+  font-weight: 600;
+}
+
+.readiness-status-not-ready {
+  color: #8a5c00;
+  font-weight: 600;
+}
+
 .benchmark-card dl {
   margin: 0;
   display: grid;
@@ -405,6 +496,7 @@ body {
   }
 
   .benchmark-card dl > div,
+  .readiness-card dl > div,
   .cache-inspection-card dl > div,
   .sync-plan-card dl > div,
   .benchmark-detail-list > div {

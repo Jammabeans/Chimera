@@ -1,4 +1,4 @@
-import { getBenchmarkById } from "@/core/registry/getBenchmarkById";
+import { getBenchmarkDetailState } from "@/core/registry/getBenchmarkDetailState";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -9,11 +9,13 @@ interface BenchmarkDetailPageProps {
 }
 
 export default function BenchmarkDetailPage({ params }: BenchmarkDetailPageProps) {
-  const benchmark = getBenchmarkById(params.id);
+  const detailState = getBenchmarkDetailState(params.id);
 
-  if (!benchmark) {
+  if (!detailState) {
     notFound();
   }
+
+  const { benchmark, cacheStatus, manifestValid, ready, readinessMessage, manifestPreview } = detailState;
 
   return (
     <main className="container">
@@ -22,7 +24,9 @@ export default function BenchmarkDetailPage({ params }: BenchmarkDetailPageProps
       </p>
 
       <h1>{benchmark.name}</h1>
-      <p className="subtle">Benchmark detail from static registry entry.</p>
+      <p className="subtle">Registry metadata plus current local cache/readiness state.</p>
+
+      <h2>Registry Metadata</h2>
 
       <dl className="benchmark-detail-list">
         <div>
@@ -72,6 +76,74 @@ export default function BenchmarkDetailPage({ params }: BenchmarkDetailPageProps
           <dd>{benchmark.status}</dd>
         </div>
       </dl>
+
+      <h2>Current Local Status</h2>
+      <dl className="benchmark-detail-list">
+        <div>
+          <dt>Cache Status</dt>
+          <dd>
+            <code>{cacheStatus}</code>
+          </dd>
+        </div>
+        <div>
+          <dt>Manifest Valid</dt>
+          <dd>{manifestValid ? "yes" : "no"}</dd>
+        </div>
+        <div>
+          <dt>Ready</dt>
+          <dd>{ready ? "yes" : "no"}</dd>
+        </div>
+        <div>
+          <dt>Status Message</dt>
+          <dd>{readinessMessage}</dd>
+        </div>
+      </dl>
+
+      {manifestValid && manifestPreview ? (
+        <section>
+          <h2>Cached Manifest Preview</h2>
+          <dl className="benchmark-detail-list">
+            <div>
+              <dt>Manifest ID</dt>
+              <dd>
+                <code>{manifestPreview.manifestId}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>Name</dt>
+              <dd>{manifestPreview.name}</dd>
+            </div>
+            <div>
+              <dt>Version</dt>
+              <dd>
+                <code>{manifestPreview.version}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>Weakness Category</dt>
+              <dd>
+                <code>{manifestPreview.weaknessCategory}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>Supported Modes</dt>
+              <dd>
+                <code>{manifestPreview.supportedModes.join(", ")}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>Level Count</dt>
+              <dd>{manifestPreview.levelCount}</dd>
+            </div>
+            <div>
+              <dt>Owner</dt>
+              <dd>
+                <code>{manifestPreview.owner}</code>
+              </dd>
+            </div>
+          </dl>
+        </section>
+      ) : null}
     </main>
   );
 }
