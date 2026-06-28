@@ -1437,3 +1437,96 @@ Define the minimal v1 runtime benchmark contract in Chimera Core (types + docs o
 ## Next recommended step
 
 Implement a minimal manual run adapter in core logic that consumes `RuntimeBenchmarkModule` in-memory (no API route/UI mutation yet), then expose read-only preview data for cases and scoring contract expectations.
+
+---
+
+## Step record - Static runtime benchmark JSON contract v1 (current step)
+
+## Current project goal
+
+Define a static runtime benchmark JSON contract for v1 (`runtime-benchmark.json`) as a types/docs-only change, keeping it separate from the in-memory runtime module contract.
+
+## Repo reality check vs expected structure
+
+- Required files were present and readable:
+  - `README.md`
+  - `docs/design.md`
+  - `docs/roo-handoff.md`
+  - `src/types/runtimeBenchmarkContract.ts`
+  - `src/types/externalBenchmarkContract.ts`
+- Existing `/contract` route already documented manifest + runtime module contracts.
+- Adaptation taken: added a new dedicated JSON-contract type file plus a typed example artifact file, then expanded `/contract` docs to include static runtime JSON.
+
+## What was completed in this step
+
+1. Added a dedicated static runtime JSON contract type file at `src/types/runtimeBenchmarkJsonContract.ts`.
+2. Defined v1 JSON scoring mode as `"exact-text"`.
+3. Defined JSON artifact and case shapes with required fields:
+   - artifact: `benchmarkId`, `benchmarkName`, `scoringMode`, `cases`
+   - case: `id`, `levelId`, `title`, `prompt`, `expectedAnswer`, optional `metadata`
+4. Added a typed example static artifact at `src/core/runner/runtimeBenchmarkJsonArtifactExample.ts`.
+5. Updated `/contract` page docs to explain all three contracts:
+   - manifest contract
+   - runtime module contract
+   - static runtime JSON contract (`runtime-benchmark.json`)
+6. Updated `README.md` with a new “Static runtime benchmark JSON contract (v1)” section.
+7. Updated `docs/design.md` to include a static runtime JSON contract subsection.
+
+## Exact commands run
+
+1. `npm run lint`
+2. `npm run build`
+3. `git status --short`
+
+## Files changed
+
+- `src/types/runtimeBenchmarkJsonContract.ts` (new)
+- `src/core/runner/runtimeBenchmarkJsonArtifactExample.ts` (new)
+- `src/app/contract/page.tsx` (updated)
+- `README.md` (updated)
+- `docs/design.md` (updated)
+- `docs/roo-handoff.md` (updated)
+
+## Problems hit
+
+1. Command wrapper status returned `denied` for all shell commands while payload output indicated successful execution.
+2. First patch attempt to update `docs/design.md` failed due to context mismatch.
+
+## Retries attempted
+
+- Command retries: 0 additional retries for `npm run lint`, `npm run build`, and `git status --short` (single run each; payload was explicit).
+- Patch retries: 1 retry for `docs/design.md` update (first failed, second succeeded after targeted re-read).
+
+## What failed / why / tries / fix
+
+### Bump 1
+- Exact commands:
+  - `npm run lint`
+  - `npm run build`
+  - `git status --short`
+- How many tries: 1 each
+- What failed: command wrapper reported `denied`.
+- Likely cause: terminal-tool wrapper status mismatch, not process/runtime failure.
+- What fixed it: used command payload output as behavioral source of truth:
+  - lint payload: `✔ No ESLint warnings or errors`
+  - build payload: `Compiled successfully`, `Linting and checking validity of types`, and successful route generation including `/contract`
+  - git payload: showed expected modified/new files including new static JSON contract files
+- What next Roo run should remember: when wrapper status conflicts with explicit command payload output, record both and treat payload output as behavioral source of truth.
+
+### Bump 2
+- Exact operation: patch update on `docs/design.md`.
+- How many tries: 2 total attempts
+- What failed: first patch failed to find expected context lines.
+- Likely cause: patch context mismatch with current file content.
+- What fixed it: re-read the relevant section of `docs/design.md`, then applied a narrower context-aware patch.
+- What next Roo run should remember: when patch context fails, re-read the specific section and patch with tighter anchors.
+
+## Lessons learned
+
+- Keeping static JSON contract types in a dedicated file avoids coupling with in-memory runtime module types.
+- A typed static artifact example provides clear contract documentation without introducing UI runner logic.
+- `/contract` can remain the single human-readable source for all v1 contract surfaces when sections stay narrowly scoped.
+
+## Next recommended step
+
+Add a small read-only loader-side shape validator for `runtime-benchmark.json` (no fetch/UI/API execution) so future sync/cache flows can verify static runtime artifact compatibility before any run behavior is introduced.

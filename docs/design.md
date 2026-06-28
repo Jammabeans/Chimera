@@ -99,7 +99,7 @@ Current runtime contract artifacts:
 
 - Type contract: `src/types/runtimeBenchmarkContract.ts`
 - Typed runtime example module: `src/core/runner/runtimeBenchmarkModuleExample.ts`
-- Human-readable contract route (manifest + runtime): `/contract`
+- Human-readable contract route (manifest + runtime module + static runtime JSON): `/contract`
 
 Notes for this version:
 
@@ -109,6 +109,38 @@ Notes for this version:
 - Simple scoring only.
 - Manual run flow will come before model API execution.
 - No execution UI, API routes, or provider integrations are added in this step.
+
+### Static runtime benchmark JSON contract (v1)
+
+Chimera Core now defines a separate static JSON contract for deterministic runtime artifacts stored at benchmark repo root as `runtime-benchmark.json`.
+
+Minimal static runtime artifact shape:
+
+- `benchmarkId`
+- `benchmarkName`
+- `scoringMode` (`exact-text` in v1)
+- `cases`
+
+Minimal static runtime case shape:
+
+- `id`
+- `levelId`
+- `title`
+- `prompt`
+- `expectedAnswer`
+- optional `metadata`
+
+Current static JSON contract artifacts:
+
+- Type contract: `src/types/runtimeBenchmarkJsonContract.ts`
+- Typed static artifact example: `src/core/runner/runtimeBenchmarkJsonArtifactExample.ts`
+- Human-readable contract route: `/contract`
+
+Notes for this version:
+
+- This static JSON contract is intentionally separate from the in-memory runtime module contract.
+- Contract remains plain-text-answer-only and deterministic.
+- No run UI, API routes, dynamic loading, or model API behavior is added in this step.
 
 ## Scoring/results UI (later)
 

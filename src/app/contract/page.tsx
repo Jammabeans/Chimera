@@ -1,5 +1,7 @@
 import { EXTERNAL_BENCHMARK_MANIFEST_EXAMPLE } from "@/core/registry/externalBenchmarkManifestExample";
+import { RUNTIME_BENCHMARK_JSON_ARTIFACT_EXAMPLE } from "@/core/runner/runtimeBenchmarkJsonArtifactExample";
 import { RUNTIME_BENCHMARK_MODULE_EXAMPLE } from "@/core/runner/runtimeBenchmarkModuleExample";
+import { RUNTIME_BENCHMARK_JSON_FILENAME } from "@/types/runtimeBenchmarkJsonContract";
 
 const REQUIRED_FIELDS = [
   "id",
@@ -18,6 +20,19 @@ const RUNTIME_CASE_FIELDS = ["id", "levelId", "title", "prompt", "metadata (opti
 const RUNTIME_ANSWER_FIELDS = ["answerText"] as const;
 
 const RUNTIME_SCORE_FIELDS = ["correct", "score", "expectedAnswer", "message"] as const;
+
+const RUNTIME_JSON_ARTIFACT_FIELDS = ["benchmarkId", "benchmarkName", "scoringMode", "cases"] as const;
+
+const RUNTIME_JSON_CASE_FIELDS = [
+  "id",
+  "levelId",
+  "title",
+  "prompt",
+  "expectedAnswer",
+  "metadata (optional)",
+] as const;
+
+const RUNTIME_JSON_SCORING_MODES = ["exact-text"] as const;
 
 const EXAMPLE_FOLDER_LAYOUT = `external-benchmark-repo/
   benchmark.manifest.json
@@ -118,6 +133,46 @@ export default function ContractPage() {
         <h3>Required scorer signature</h3>
         <pre className="contract-code-block">
           <code>{RUNTIME_SCORE_SIGNATURE}</code>
+        </pre>
+      </section>
+
+      <section className="contract-section" aria-label="Static runtime benchmark JSON contract">
+        <h2>3) Static runtime JSON contract ({RUNTIME_BENCHMARK_JSON_FILENAME})</h2>
+        <p className="subtle">
+          This is a separate on-disk artifact contract for static deterministic runtime cases. It is JSON-friendly and
+          distinct from the in-memory runtime module contract above.
+        </p>
+
+        <h3>Runtime benchmark JSON fields</h3>
+        <ul className="contract-field-list">
+          {RUNTIME_JSON_ARTIFACT_FIELDS.map((field) => (
+            <li key={field}>
+              <code>{field}</code>
+            </li>
+          ))}
+        </ul>
+
+        <h3>Runtime case JSON fields</h3>
+        <ul className="contract-field-list">
+          {RUNTIME_JSON_CASE_FIELDS.map((field) => (
+            <li key={field}>
+              <code>{field}</code>
+            </li>
+          ))}
+        </ul>
+
+        <h3>Scoring mode (v1)</h3>
+        <ul className="contract-field-list">
+          {RUNTIME_JSON_SCORING_MODES.map((mode) => (
+            <li key={mode}>
+              <code>{mode}</code>
+            </li>
+          ))}
+        </ul>
+
+        <h3>Sample {RUNTIME_BENCHMARK_JSON_FILENAME}</h3>
+        <pre className="contract-code-block">
+          <code>{JSON.stringify(RUNTIME_BENCHMARK_JSON_ARTIFACT_EXAMPLE, null, 2)}</code>
         </pre>
       </section>
     </main>

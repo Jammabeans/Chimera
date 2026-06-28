@@ -140,7 +140,7 @@ Chimera Core now also defines a separate **runtime** benchmark contract for manu
   - registry entry types in [`BenchmarkRegistryEntry`](src/types/benchmark.ts:20)
   - external manifest contract types in [`ExternalBenchmarkManifest`](src/types/externalBenchmarkContract.ts:10)
 - A typed runtime module example is provided in [`RUNTIME_BENCHMARK_MODULE_EXAMPLE`](src/core/runner/runtimeBenchmarkModuleExample.ts:37).
-- The contract page at [`/contract`](src/app/contract/page.tsx) now documents both the manifest contract and the runtime contract.
+- The contract page at [`/contract`](src/app/contract/page.tsx) now documents the manifest contract, runtime module contract, and static runtime JSON contract.
 
 Minimal runtime v1 shape:
 
@@ -169,6 +169,38 @@ Runtime scope boundaries in this step:
 - simple scoring only
 - no execution UI yet
 - no model API calls
+
+## Static runtime benchmark JSON contract (v1)
+
+Chimera Core now defines a separate static JSON contract for deterministic runtime artifacts stored at benchmark repo root as [`runtime-benchmark.json`](runtime-benchmark.json).
+
+- Static JSON contract types are defined in [`src/types/runtimeBenchmarkJsonContract.ts`](src/types/runtimeBenchmarkJsonContract.ts).
+- This JSON contract is intentionally separate from the in-memory runtime module types in [`src/types/runtimeBenchmarkContract.ts`](src/types/runtimeBenchmarkContract.ts).
+- A typed static artifact example is provided in [`RUNTIME_BENCHMARK_JSON_ARTIFACT_EXAMPLE`](src/core/runner/runtimeBenchmarkJsonArtifactExample.ts:3).
+- v1 scoring mode is fixed to `scoringMode: "exact-text"`.
+
+Minimal static JSON v1 shape:
+
+- Runtime benchmark artifact:
+  - `benchmarkId`
+  - `benchmarkName`
+  - `scoringMode`
+  - `cases`
+- Runtime case:
+  - `id`
+  - `levelId`
+  - `title`
+  - `prompt`
+  - `expectedAnswer`
+  - optional `metadata`
+
+Static JSON scope boundaries in this step:
+
+- plain text answers only
+- static deterministic cases only
+- exact-text scoring only
+- no run UI yet
+- no API routes
 
 ## Install
 
