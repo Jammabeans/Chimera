@@ -140,7 +140,39 @@ Notes for this version:
 
 - This static JSON contract is intentionally separate from the in-memory runtime module contract.
 - Contract remains plain-text-answer-only and deterministic.
-- No run UI, API routes, dynamic loading, or model API behavior is added in this step.
+- First manual run UI now exists at `/benchmarks/[id]/run` and uses cached `runtime-benchmark.json`.
+- No API routes, dynamic loading, or model API behavior is added in this step.
+
+### Manual benchmark run flow (v1)
+
+- Route-level run page exists at `/benchmarks/[id]/run`.
+- Unknown benchmark ids preserve route-level not-found behavior.
+- Runtime source is cached benchmark repo root artifact:
+  - `benchmarks-cache/<benchmark-id>/runtime-benchmark.json`
+- Run flow is intentionally narrow and deterministic:
+  - operator selects one case at a time
+  - prompt is shown as plain text
+  - answer input is plain text only
+  - scoring is exact string equality against case `expectedAnswer`
+  - result fields are `correct`, `score`, `expectedAnswer`, `message`
+- Runtime JSON loading/validation is implemented in a small server utility:
+  - `src/core/registry/getRuntimeBenchmarkJsonFromCache.ts`
+- Scoring logic is implemented in a small core helper:
+  - `src/core/runner/scoreRuntimeBenchmarkCase.ts`
+
+Validation remains practical/minimal for v1:
+
+- file exists
+- JSON parses
+- required top-level fields exist (`benchmarkId`, `benchmarkName`, `scoringMode`, `cases`)
+- `scoringMode` is `exact-text`
+- `cases` is an array
+
+Out-of-scope in this version:
+
+- no model/API providers
+- no database persistence/history
+- no background run orchestration
 
 ## Scoring/results UI (later)
 

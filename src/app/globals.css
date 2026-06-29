@@ -489,6 +489,60 @@ body {
   color: #333;
 }
 
+.runtime-case-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.runtime-case-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.75rem;
+  background: #fff;
+}
+
+.runtime-case-meta {
+  margin-top: 0.3rem;
+}
+
+.runtime-case-actions {
+  margin: 0.6rem 0 0;
+}
+
+.runtime-answer-form {
+  display: grid;
+  gap: 0.6rem;
+  max-width: 760px;
+}
+
+.runtime-answer-form textarea {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid #cfcfcf;
+  border-radius: 6px;
+  padding: 0.55rem;
+  font: inherit;
+}
+
+.runtime-answer-form button {
+  width: fit-content;
+  border: 1px solid #1f4fbf;
+  background: #1f4fbf;
+  color: #fff;
+  border-radius: 6px;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.runtime-answer-form button:hover {
+  background: #1842a3;
+  border-color: #1842a3;
+}
+
 @media (max-width: 640px) {
   .app-shell-inner {
     align-items: flex-start;

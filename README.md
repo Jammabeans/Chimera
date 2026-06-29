@@ -199,8 +199,43 @@ Static JSON scope boundaries in this step:
 - plain text answers only
 - static deterministic cases only
 - exact-text scoring only
-- no run UI yet
+- manual run UI only
 - no API routes
+
+## Manual run flow (v1)
+
+Chimera Core now includes the first manual benchmark run route at `/benchmarks/[id]/run`.
+
+- Route: `/benchmarks/[id]/run`
+- Runtime loader: `getRuntimeBenchmarkJsonFromCache()` in `src/core/registry/getRuntimeBenchmarkJsonFromCache.ts`
+- Scoring helper: `scoreRuntimeBenchmarkCase()` in `src/core/runner/scoreRuntimeBenchmarkCase.ts`
+- Runtime source: cached repo-root artifact in benchmark cache:
+  - `benchmarks-cache/<benchmark-id>/runtime-benchmark.json`
+
+v1 run behavior:
+
+- user opens run page for a known benchmark id
+- page shows benchmark name/id and runtime JSON found/valid state
+- if runtime JSON is valid, page lists available cases
+- user selects one case, sees prompt text, enters plain text answer
+- submit triggers server-side exact-text scoring against `expectedAnswer`
+- page renders deterministic result fields:
+  - `correct`
+  - `score`
+  - `expectedAnswer`
+  - `message`
+
+Validation for cached runtime JSON is intentionally minimal/practical:
+
+- file exists
+- JSON parses
+- required top-level fields exist (`benchmarkId`, `benchmarkName`, `scoringMode`, `cases`)
+- `scoringMode` is `exact-text`
+- `cases` is an array
+
+If runtime JSON is missing/invalid, the run page shows a clean message and does not crash.
+
+Benchmark detail pages now include a small link to the manual run page.
 
 ## Install
 

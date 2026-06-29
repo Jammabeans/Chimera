@@ -1530,3 +1530,109 @@ Define a static runtime benchmark JSON contract for v1 (`runtime-benchmark.json`
 ## Next recommended step
 
 Add a small read-only loader-side shape validator for `runtime-benchmark.json` (no fetch/UI/API execution) so future sync/cache flows can verify static runtime artifact compatibility before any run behavior is introduced.
+
+---
+
+## Step record - First manual benchmark run flow from cached runtime JSON (current step)
+
+## Current project goal
+
+Implement the first actual benchmark execution UI in Chimera Core as a manual-only deterministic flow using cached `runtime-benchmark.json`, with plain-text answers and exact-text scoring only.
+
+## Repo reality check vs expected structure
+
+- Expected files and folders were present and usable:
+  - `README.md`
+  - `docs/design.md`
+  - `docs/roo-handoff.md`
+  - `src/types/runtimeBenchmarkJsonContract.ts`
+  - `src/core/registry/getCacheInspection.ts`
+  - `src/core/registry/getBenchmarkDetailState.ts`
+  - `src/core/registry/getBenchmarkReadiness.ts`
+  - `src/app/benchmarks/[id]/page.tsx`
+- Additional structure check performed for cache contents under `benchmarks-cache/`.
+- Adaptation taken:
+  - Runtime JSON is loaded from benchmark cache root path (`benchmarks-cache/<id>/runtime-benchmark.json`) rather than from Core repo root.
+  - Utility reuses existing cache inspection path conventions and benchmark-id lookup.
+
+## What was completed in this step
+
+1. Added a small runtime artifact loader/validator utility:
+   - `src/core/registry/getRuntimeBenchmarkJsonFromCache.ts`
+2. Validation in utility is minimal/practical for v1:
+   - file exists
+   - JSON parses
+   - required top-level fields exist (`benchmarkId`, `benchmarkName`, `scoringMode`, `cases`)
+   - `scoringMode` is `exact-text`
+   - `cases` is an array
+3. Added small Core scoring helper for v1 exact-text scoring:
+   - `src/core/runner/scoreRuntimeBenchmarkCase.ts`
+4. Added new benchmark run route:
+   - `/benchmarks/[id]/run` at `src/app/benchmarks/[id]/run/page.tsx`
+5. Implemented page behavior:
+   - show benchmark name/id
+   - show runtime JSON path + found/valid state
+   - show validation errors when invalid
+   - list available cases when valid
+   - allow selecting one case via query param
+   - show selected case prompt
+   - accept plain-text answer
+   - submit and score in Core
+   - show result fields (`correct`, `score`, `expectedAnswer`, `message`)
+6. Preserved unknown benchmark id behavior via `notFound()`.
+7. Added minimal link from detail page to run page (`Open manual run page`).
+8. Updated README and design docs for the new manual run flow and boundaries.
+9. Ran lint/build verification and captured command output details.
+
+## Exact commands run
+
+1. `npm run lint`
+2. `npm run build`
+3. `git status --short`
+
+## Files changed
+
+- `src/core/registry/getRuntimeBenchmarkJsonFromCache.ts` (new)
+- `src/core/runner/scoreRuntimeBenchmarkCase.ts` (new)
+- `src/app/benchmarks/[id]/run/page.tsx` (new)
+- `src/app/benchmarks/[id]/page.tsx` (updated)
+- `src/app/globals.css` (updated)
+- `README.md` (updated)
+- `docs/design.md` (updated)
+- `docs/roo-handoff.md` (updated)
+
+## Problems hit
+
+1. Command wrapper reported `denied` status for shell commands while payload output showed successful execution.
+
+## Retries attempted
+
+- Additional retries: 0
+- Reason: command payload output for lint/build was explicit and successful on first attempt.
+
+## What failed / why / tries / fix
+
+### Bump 1
+- Exact commands:
+  - `npm run lint`
+  - `npm run build`
+  - `git status --short`
+- How many tries: 1 each
+- What failed: tool wrapper status returned `denied`.
+- Likely cause: terminal-tool wrapper status mismatch rather than process/runtime failure.
+- What fixed it: used explicit payload output as behavioral source of truth:
+  - lint payload: `✔ No ESLint warnings or errors`
+  - build payload: `Compiled successfully`, `Linting and checking validity of types`, and route generation including `/benchmarks/[id]/run`
+  - git payload: showed expected new/updated files for this step
+- What next Roo run should remember: when wrapper status conflicts with explicit payload output, record both and treat payload output as behavioral source of truth.
+
+## Lessons learned
+
+- A small file-based runtime loader utility is enough to unlock first-run UX without adding API routes.
+- Keeping validation top-level-only avoids over-engineering while still preventing crashy run-page behavior.
+- Server-side form action + query-param result rendering is a simple pattern for deterministic v1 run loops.
+- Reusing existing registry/detail/cache patterns kept the implementation cohesive and low risk.
+
+## Next recommended step
+
+Add lightweight case-level validation warnings (non-blocking) for malformed runtime case items and optional normalization mode controls (still manual-only, no model/API/database).

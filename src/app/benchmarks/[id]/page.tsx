@@ -97,6 +97,12 @@ export default function BenchmarkDetailPage({ params }: BenchmarkDetailPageProps
           <dt>Status Message</dt>
           <dd>{readinessMessage}</dd>
         </div>
+        <div>
+          <dt>Manual Run</dt>
+          <dd>
+            <Link href={`/benchmarks/${benchmark.id}/run`}>Open manual run page</Link>
+          </dd>
+        </div>
       </dl>
 
       {manifestValid && manifestPreview ? (
