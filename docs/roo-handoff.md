@@ -1826,3 +1826,105 @@ Define a minimal provider/model execution contract so Chimera Core can represent
 ## Next recommended step
 
 Add a tiny in-memory adapter interface under `src/core/providers` (still no provider SDK calls) that accepts `ProviderExecutionRequest` and returns `ProviderExecutionResponse`, then document how runner code will compose that adapter with existing scoring + run-history utilities.
+
+---
+
+## Step record - First actual OpenAI provider execution path + model-run history (current step)
+
+## Current project goal
+
+Implement the first practical provider execution flow in Chimera Core using OpenAI, keep scope narrow, preserve manual run flow, and persist provider/model run results separately from manual runs.
+
+## Repo reality check vs expected structure
+
+- Required files were present and readable:
+  - `README.md`
+  - `docs/design.md`
+  - `docs/roo-handoff.md`
+  - `src/types/providerExecutionContract.ts`
+  - `src/app/benchmarks/[id]/run/page.tsx`
+  - `src/core/storage/manualRunHistory.ts`
+- Existing structure already had dedicated provider, runner, and storage areas:
+  - `src/core/providers`
+  - `src/core/runner`
+  - `src/core/storage`
+- Adaptation taken: implemented provider execution through server-side utility + server action on existing run page (no API route added).
+
+## What was completed in this step
+
+1. Added first OpenAI provider utility:
+   - `src/core/providers/openaiProvider.ts`
+2. Implemented server-side provider execution path and scoring composition:
+   - `src/core/runner/executeProviderBenchmarkCase.ts`
+3. Added safe provider error handling:
+   - missing `OPENAI_API_KEY` returns readable error
+   - OpenAI/API/network failures return readable non-crashing error
+   - empty/usable-text-missing output returns readable error
+4. Added separate model-run history storage utility:
+   - `src/core/storage/modelRunHistory.ts`
+5. Added separate model-run history file:
+   - `data/model-run-history.json`
+6. Updated benchmark run page (`/benchmarks/[id]/run`) to support:
+   - model id input with simple default (`gpt-4o-mini`)
+   - `Run with OpenAI` action
+   - provider output + exact-text scoring result display
+   - readable provider error surface
+   - recent model runs section (latest 5 for current benchmark)
+7. Preserved existing manual run flow and manual history behavior.
+8. Updated docs for this new runtime behavior in:
+   - `README.md`
+   - `docs/design.md`
+
+## Exact commands run
+
+1. `npm run lint`
+2. `npm run build`
+3. `git status --short`
+
+## Files changed
+
+- `src/core/providers/openaiProvider.ts` (new)
+- `src/core/runner/executeProviderBenchmarkCase.ts` (new)
+- `src/core/storage/modelRunHistory.ts` (new)
+- `data/model-run-history.json` (new)
+- `src/app/benchmarks/[id]/run/page.tsx` (updated)
+- `src/app/globals.css` (updated)
+- `README.md` (updated)
+- `docs/design.md` (updated)
+- `docs/roo-handoff.md` (updated)
+
+## Problems hit
+
+1. Command wrapper status reported `denied` while command payload output reported success.
+
+## Retries attempted
+
+- Additional retries: 0
+- Reason: payload output was explicit/successful for lint/build, so no repeated command attempts were required.
+
+## What failed / why / tries / fix
+
+### Bump 1
+- Exact commands:
+  - `npm run lint`
+  - `npm run build`
+  - `git status --short`
+- How many tries: 1 each
+- What failed: tool wrapper status reported `denied`.
+- Likely cause: terminal-tool wrapper status mismatch rather than process/runtime failure.
+- What fixed it: used explicit command payload output as behavioral source of truth:
+  - lint payload: `✔ No ESLint warnings or errors`
+  - build payload: `Compiled successfully`, type checks passed, and route generation including `/benchmarks/[id]/run`
+  - git payload: expected modified/new files listed
+- What next Roo run should remember: when wrapper status conflicts with explicit payload output, record both and treat payload output as behavioral source of truth.
+
+## Lessons learned
+
+- Keeping provider execution isolated in a small utility + runner composition keeps the run page logic practical and reviewable.
+- Separate persistence files for manual runs and model runs avoids schema coupling and keeps migration path cleaner.
+- Server-side action wiring on existing page was sufficient for first provider path without adding API route complexity.
+- Simple, explicit provider errors materially improve operator experience when env/API issues occur.
+
+## Next recommended step
+
+Add a small benchmark-level model-run history view/filtering on `/runs` (query-param based) that can include provider/model fields while keeping storage local-file-only and avoiding dashboard over-expansion.

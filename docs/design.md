@@ -145,7 +145,7 @@ Notes for this version:
 
 ### Provider/model execution contract (v1)
 
-Chimera Core now defines a separate provider/model execution contract for future model-driven benchmark runs.
+Chimera Core now uses this contract for the first practical provider execution path (OpenAI-first) while keeping scope narrow.
 
 Minimal execution request shape:
 
@@ -182,14 +182,18 @@ Current provider execution contract artifacts:
 
 - Type contract: `src/types/providerExecutionContract.ts`
 - Typed example objects: `src/core/providers/providerExecutionContractExample.ts`
+- OpenAI provider utility: `src/core/providers/openaiProvider.ts`
+- Provider execution runner composition: `src/core/runner/executeProviderBenchmarkCase.ts`
 - Human-readable contract route (all contract surfaces): `/contract`
 
 Notes for this version:
 
 - Contract remains intentionally small and practical for v1.
-- This is a types/docs-only addition.
-- No provider SDK/API integration is implemented.
-- No environment variable handling, provider UI wiring, or automated execution flow is added in this step.
+- First provider path is OpenAI via server-side REST `fetch`.
+- Required environment variable: `OPENAI_API_KEY`.
+- Operator runs one benchmark case at a time.
+- Model selection remains simple (`modelId` text input, default `gpt-4o-mini`).
+- No provider comparison UI and no multi-provider abstraction expansion yet.
 
 ### Manual benchmark run flow (v1)
 
@@ -204,15 +208,23 @@ Notes for this version:
   - scoring is exact string equality against case `expectedAnswer`
   - result fields are `correct`, `score`, `expectedAnswer`, `message`
   - after scoring, run result is appended to local file history (best-effort)
+  - run page also supports model execution for selected case via OpenAI
+  - provider result fields include output text, exact-text score, and duration
+  - provider errors are shown as readable non-crashing messages
 - Runtime JSON loading/validation is implemented in a small server utility:
   - `src/core/registry/getRuntimeBenchmarkJsonFromCache.ts`
 - Scoring logic is implemented in a small core helper:
   - `src/core/runner/scoreRuntimeBenchmarkCase.ts`
 - Manual run history storage utility is implemented in:
   - `src/core/storage/manualRunHistory.ts`
+- Model run history storage utility is implemented in:
+  - `src/core/storage/modelRunHistory.ts`
+- Model run history file is:
+  - `data/model-run-history.json`
 - Global history view is available at:
   - `/runs`
 - Benchmark run page also shows benchmark-scoped recent runs (latest 5 entries).
+- Benchmark run page also shows benchmark-scoped recent model runs (latest 5 entries).
 
 Validation remains practical/minimal for v1:
 
@@ -224,9 +236,12 @@ Validation remains practical/minimal for v1:
 
 Out-of-scope in this version:
 
-- no model/API providers
 - no database persistence (history is local JSON file only)
 - no background run orchestration
+- no streaming
+- no retries/backoff system beyond minimal error handling
+- no batch execution
+- no agent loops
 
 ## Scoring/results UI (later)
 

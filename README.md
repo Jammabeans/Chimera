@@ -202,51 +202,28 @@ Static JSON scope boundaries in this step:
 - manual run UI only
 - no API routes
 
-## Provider execution contract (v1)
+## Provider execution (v1: OpenAI first path)
 
-Chimera Core now defines a minimal provider/model execution contract for future model-driven benchmark runs.
+Chimera Core now includes the first actual provider execution path using OpenAI.
 
-- Contract types are defined in [`src/types/providerExecutionContract.ts`](src/types/providerExecutionContract.ts).
-- A typed example object set is provided in [`src/core/providers/providerExecutionContractExample.ts`](src/core/providers/providerExecutionContractExample.ts).
-- The contract page at [`/contract`](src/app/contract/page.tsx) now documents all four contract surfaces:
-  - external manifest contract
-  - runtime module contract
-  - static runtime JSON contract
-  - provider/model execution contract
+- Provider execution contract types remain in [`src/types/providerExecutionContract.ts`](src/types/providerExecutionContract.ts).
+- OpenAI provider utility lives in [`src/core/providers/openaiProvider.ts`](src/core/providers/openaiProvider.ts).
+- Server-side provider execution + scoring composition lives in [`src/core/runner/executeProviderBenchmarkCase.ts`](src/core/runner/executeProviderBenchmarkCase.ts).
+- The benchmark run page at [`/benchmarks/[id]/run`](src/app/benchmarks/[id]/run/page.tsx) now supports:
+  - selecting one case
+  - entering a `modelId` (default: `gpt-4o-mini`)
+  - `Run with OpenAI`
+  - rendering provider output text
+  - exact-text scoring against `expectedAnswer`
+  - readable provider error messages
 
-Minimal provider execution v1 shape:
+Provider behavior in this step:
 
-- Execution request:
-  - `benchmarkId`
-  - `caseId`
-  - `prompt`
-  - `providerId`
-  - `modelId`
-- Execution response:
-  - `outputText`
-  - optional `rawResponseMetadata`
-- Execution metadata:
-  - `timestamp`
-  - `durationMs`
-  - `providerId`
-  - `modelId`
-- Scored model run result:
-  - `benchmarkId`
-  - `caseId`
-  - `prompt`
-  - `outputText`
-  - `expectedAnswer`
-  - `correct`
-  - `score`
-  - `metadata`
-
-Provider execution scope boundaries in this step:
-
-- types/docs only
-- no provider SDK/API calls
-- no environment variable handling
-- no provider UI wiring
-- no automated execution flow
+- first provider only: `openai`
+- one benchmark case at a time
+- non-streaming request via server-side `fetch` to OpenAI REST API
+- plain-text output extraction
+- minimal safe error handling for missing API key and provider/API failures
 
 ## Manual run flow (v1)
 
@@ -273,6 +250,7 @@ v1 run behavior:
 - after scoring, the page attempts to append a local history record to `data/manual-run-history.json`
 - history write failures are non-fatal: score result still renders and a small warning is shown
 - run page includes a small benchmark-scoped recent runs list (latest 5)
+- run page includes a small benchmark-scoped recent model runs list (latest 5)
 - global history page is available at `/runs` in reverse chronological order
 
 Validation for cached runtime JSON is intentionally minimal/practical:
@@ -310,6 +288,31 @@ Chimera Core now stores manual run history in one local flat JSON file.
   - `score`
   - `scoringMode`
 
+## Model run history (v1)
+
+Chimera Core now stores model/provider run history in a separate local flat JSON file.
+
+- Storage file: [`data/model-run-history.json`](data/model-run-history.json)
+- Storage utility: [`modelRunHistory`](src/core/storage/modelRunHistory.ts)
+- Scope is intentionally narrow:
+  - local file only
+  - model/provider benchmark runs only
+  - no database
+- Stored fields include:
+  - `timestamp`
+  - `benchmarkId`
+  - `benchmarkName`
+  - `caseId`
+  - `caseTitle`
+  - `providerId`
+  - `modelId`
+  - `prompt`
+  - `outputText`
+  - `expectedAnswer`
+  - `correct`
+  - `score`
+  - `durationMs`
+
 ## Install
 
 ```bash
@@ -320,6 +323,12 @@ npm install
 
 ```bash
 npm run dev
+```
+
+Required environment variable for provider execution:
+
+```bash
+OPENAI_API_KEY=your_openai_api_key
 ```
 
 Then open http://localhost:3000.

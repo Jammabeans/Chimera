@@ -527,6 +527,14 @@ body {
   font: inherit;
 }
 
+.runtime-answer-form input[type="text"] {
+  width: 100%;
+  border: 1px solid #cfcfcf;
+  border-radius: 6px;
+  padding: 0.5rem 0.55rem;
+  font: inherit;
+}
+
 .runtime-answer-form button {
   width: fit-content;
   border: 1px solid #1f4fbf;

@@ -1,0 +1,47 @@
+[
+  {
+    "timestamp": "2026-06-29T03:06:15.297Z",
+    "benchmarkId": "state-trace",
+    "benchmarkName": "State Trace",
+    "caseId": "trace-6-step",
+    "caseTitle": "6-step trace",
+    "providerId": "openai",
+    "modelId": "gpt-4o-mini",
+    "prompt": "Start with initial state: R0\nApply operations in order:\n1) Append 'a' to the right.\n2) Replace every '0' with '9'.\n3) Prepend 'L' to the left.\n4) Reverse the full string.\n5) Drop the first character.\n6) Append 'x' to the right.\nReturn only the final state as plain text.",
+    "outputText": "xL9a",
+    "expectedAnswer": "9RLx",
+    "correct": false,
+    "score": 0,
+    "durationMs": 1903
+  },
+  {
+    "timestamp": "2026-06-29T03:04:27.118Z",
+    "benchmarkId": "state-trace",
+    "benchmarkName": "State Trace",
+    "caseId": "trace-4-step",
+    "caseTitle": "4-step trace",
+    "providerId": "openai",
+    "modelId": "gpt-4o-mini",
+    "prompt": "Start with initial state: M2\nApply operations in order:\n1) Prepend 'Q' to the left.\n2) Replace every '2' with '7'.\n3) Append 'Z' to the right.\n4) Drop the first character.\nReturn only the final state as plain text.",
+    "outputText": "M7Z",
+    "expectedAnswer": "M7Z",
+    "correct": true,
+    "score": 1,
+    "durationMs": 1746
+  },
+  {
+    "timestamp": "2026-06-29T03:00:05.094Z",
+    "benchmarkId": "state-trace",
+    "benchmarkName": "State Trace",
+    "caseId": "trace-2-step",
+    "caseTitle": "2-step trace",
+    "providerId": "openai",
+    "modelId": "gpt-4o-mini",
+    "prompt": "Start with initial state: AX\nApply operations in order:\n1) Append 'B' to the right.\n2) Reverse the full string.\nReturn only the final state as plain text.",
+    "outputText": "The final state is: BXA",
+    "expectedAnswer": "BXA",
+    "correct": false,
+    "score": 0,
+    "durationMs": 2392
+  }
+]
