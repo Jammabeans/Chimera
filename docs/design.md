@@ -221,8 +221,11 @@ Notes for this version:
   - `src/core/storage/modelRunHistory.ts`
 - Model run history file is:
   - `data/model-run-history.json`
-- Global history view is available at:
-  - `/runs`
+- Combined run timeline utility is implemented in:
+  - `src/core/storage/getCombinedRunTimeline.ts`
+- Global history view is available at `/runs` as one reverse-chronological timeline containing both:
+  - manual runs (`runType: manual`)
+  - model runs (`runType: model`)
 - Benchmark run page also shows benchmark-scoped recent runs (latest 5 entries).
 - Benchmark run page also shows benchmark-scoped recent model runs (latest 5 entries).
 

@@ -1928,3 +1928,105 @@ Implement the first practical provider execution flow in Chimera Core using Open
 ## Next recommended step
 
 Add a small benchmark-level model-run history view/filtering on `/runs` (query-param based) that can include provider/model fields while keeping storage local-file-only and avoiding dashboard over-expansion.
+
+---
+
+## Step record - Combined manual + model timeline on `/runs` (current step)
+
+## Current project goal
+
+Show one combined `/runs` timeline for both manual and model runs, with clear run-type labeling and useful model fields, while keeping underlying storage files separate.
+
+## Repo reality check vs expected structure
+
+- Required files were present and readable:
+  - `README.md`
+  - `docs/design.md`
+  - `docs/roo-handoff.md`
+  - `src/app/runs/page.tsx`
+  - `src/core/storage/manualRunHistory.ts`
+  - `src/core/storage/modelRunHistory.ts`
+- Existing storage split matched expectation:
+  - `data/manual-run-history.json`
+  - `data/model-run-history.json`
+- Adaptation taken: added one small shared composition utility in `src/core/storage` and kept storage files/utilities unchanged.
+
+## What was completed in this step
+
+1. Added a shared combined-timeline utility:
+   - `src/core/storage/getCombinedRunTimeline.ts`
+2. Utility behavior:
+   - reads manual run history and model run history
+   - normalizes both into one display-friendly union shape
+   - adds explicit `runType` (`manual` or `model`)
+   - sorts all entries by timestamp descending
+   - returns combined warnings from both history readers
+3. Updated `/runs` page to read from combined utility and render one unified list.
+4. Added clear run-type badges (`manual` / `model`) on each timeline card.
+5. Preserved manual fields in timeline cards:
+   - submitted answer
+   - expected answer
+   - correct
+   - score
+   - scoring mode
+6. Added model fields in timeline cards:
+   - providerId
+   - modelId
+   - outputText
+   - expectedAnswer
+   - correct
+   - score
+   - durationMs
+7. Added small CSS updates to keep cards readable and avoid dense/wrapping issues for long code text.
+8. Updated README and design docs briefly to reflect combined `/runs` behavior.
+
+## Exact commands run
+
+1. `npm run lint`
+2. `npm run build`
+3. `git status --short`
+
+## Files changed
+
+- `src/core/storage/getCombinedRunTimeline.ts` (new)
+- `src/app/runs/page.tsx` (updated)
+- `src/app/globals.css` (updated)
+- `README.md` (updated)
+- `docs/design.md` (updated)
+- `docs/roo-handoff.md` (updated)
+
+## Problems hit
+
+1. Command wrapper status returned `denied` for all executed commands while command payload output reported success.
+
+## Retries attempted
+
+- Additional retries: 0
+- Reason: payload output for lint/build was explicit and successful on first attempt.
+
+## What failed / why / tries / fix
+
+### Bump 1
+- Exact commands:
+  - `npm run lint`
+  - `npm run build`
+  - `git status --short`
+- How many tries: 1 each
+- What failed: tool wrapper status reported `denied`.
+- Likely cause: terminal-tool wrapper status mismatch rather than process/runtime failure.
+- What fixed it: used explicit command payload output as behavioral source of truth:
+  - lint payload: `✔ No ESLint warnings or errors`
+  - build payload: `Compiled successfully`, lint/type checks passed, route generation includes `/runs`
+  - git payload: returned changed/new files as expected
+- What next Roo run should remember: when wrapper status conflicts with explicit payload output, record both and treat payload output as behavioral source of truth.
+
+## Lessons learned
+
+- A tiny shared composition utility keeps `/runs` page logic simple and avoids coupling manual/model storage schemas.
+- Distinguishing run type with small badges makes mixed timelines scanable without adding UI complexity.
+- Keeping conditional card fields by run type preserves useful detail while avoiding over-dense unified rows.
+- Storage split (`manual-run-history.json` + `model-run-history.json`) can remain intact while still offering one operator timeline.
+
+## Next recommended step
+
+Add lightweight query-param filtering on `/runs` (for example by benchmark id, run type, and correctness) while reusing the combined timeline utility and keeping storage local-file-only.

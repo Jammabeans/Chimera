@@ -251,7 +251,7 @@ v1 run behavior:
 - history write failures are non-fatal: score result still renders and a small warning is shown
 - run page includes a small benchmark-scoped recent runs list (latest 5)
 - run page includes a small benchmark-scoped recent model runs list (latest 5)
-- global history page is available at `/runs` in reverse chronological order
+- global history page is available at `/runs` as one combined reverse-chronological timeline of manual + model runs
 
 Validation for cached runtime JSON is intentionally minimal/practical:
 
@@ -312,6 +312,16 @@ Chimera Core now stores model/provider run history in a separate local flat JSON
   - `correct`
   - `score`
   - `durationMs`
+
+## Combined run timeline on `/runs` (v1)
+
+- Timeline utility: [`getCombinedRunTimeline()`](src/core/storage/getCombinedRunTimeline.ts:99)
+- `/runs` now reads both local history files and normalizes them into one display shape with `runType`:
+  - `manual`
+  - `model`
+- Timeline entries are sorted by timestamp descending.
+- Model timeline cards include provider/model output fields (`providerId`, `modelId`, `outputText`, `expectedAnswer`, `correct`, `score`).
+- Manual timeline cards preserve existing manual fields (`submittedAnswer`, `expectedAnswer`, `correct`, `score`, `scoringMode`).
 
 ## Install
 
