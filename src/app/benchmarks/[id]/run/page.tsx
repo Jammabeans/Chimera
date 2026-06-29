@@ -220,6 +220,10 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
   const hasProviderScoreResult = providerSubmitStatus === "scored";
   const providerResultCorrect = providerResultCorrectParam === "true";
 
+  const selectedCaseLabel = selectedCase
+    ? `${selectedCase.title} (level: ${selectedCase.levelId})`
+    : "No case selected";
+
   return (
     <main className="container">
       <p>
@@ -228,6 +232,30 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
 
       <h1>Manual Benchmark Run (v1)</h1>
       <p className="subtle">Manual-only flow using cached runtime-benchmark.json with exact-text scoring.</p>
+
+      <section className="run-page-summary">
+        <h2>Run Summary</h2>
+        <dl className="benchmark-detail-list">
+          <div>
+            <dt>Benchmark</dt>
+            <dd>{benchmark.name}</dd>
+          </div>
+          <div>
+            <dt>Benchmark ID</dt>
+            <dd>
+              <code>{benchmark.id}</code>
+            </dd>
+          </div>
+          <div>
+            <dt>Selected Case</dt>
+            <dd>{selectedCaseLabel}</dd>
+          </div>
+          <div>
+            <dt>Runtime Status</dt>
+            <dd>{runtimeState.valid ? "runtime ready" : "runtime unavailable"}</dd>
+          </div>
+        </dl>
+      </section>
 
       <h2>Benchmark</h2>
       <dl className="benchmark-detail-list">
@@ -291,21 +319,35 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
           ) : null}
 
           <section>
-            <h2>Available Cases</h2>
+            <h2>Case Selection</h2>
             {runtimeCases.length === 0 ? (
               <p>No runtime cases were found in runtime-benchmark.json.</p>
             ) : (
               <ul className="runtime-case-list">
                 {runtimeCases.map((item) => (
-                  <li key={item.id} className="runtime-case-card">
+                  <li
+                    key={item.id}
+                    className={`runtime-case-card ${selectedCase?.id === item.id ? "runtime-case-card-selected" : ""}`}
+                  >
                     <div>
-                      <strong>{item.title}</strong> <span className="subtle">({item.id})</span>
+                      <strong>{item.title}</strong>
                     </div>
                     <div className="runtime-case-meta">
-                      <code>level: {item.levelId}</code>
+                      <span>
+                        Level: <code>{item.levelId}</code>
+                      </span>
+                    </div>
+                    <div className="runtime-case-meta">
+                      <span>
+                        Case ID: <code>{item.id}</code>
+                      </span>
                     </div>
                     <p className="runtime-case-actions">
-                      <Link href={`/benchmarks/${benchmark.id}/run?caseId=${encodeURIComponent(item.id)}`}>Select case</Link>
+                      {selectedCase?.id === item.id ? (
+                        <span className="case-selected-badge">Selected</span>
+                      ) : (
+                        <Link href={`/benchmarks/${benchmark.id}/run?caseId=${encodeURIComponent(item.id)}`}>Select case</Link>
+                      )}
                     </p>
                   </li>
                 ))}
@@ -341,108 +383,130 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
                 </div>
               </dl>
 
-              <h2>Run with OpenAI</h2>
-              <form action={runWithOpenAiAction} className="runtime-answer-form">
-                <input type="hidden" name="benchmarkId" value={benchmark.id} />
-                <input type="hidden" name="caseId" value={selectedCase.id} />
+              <div className="run-panels-grid">
+                <section className="run-panel">
+                  <h2>Manual Run</h2>
+                  <form action={submitAnswerAction} className="runtime-answer-form">
+                    <input type="hidden" name="benchmarkId" value={benchmark.id} />
+                    <input type="hidden" name="caseId" value={selectedCase.id} />
 
-                <label htmlFor="modelId">Model ID</label>
-                <input id="modelId" name="modelId" type="text" defaultValue={selectedModelId} />
+                    <label htmlFor="answerText">Submitted answer</label>
+                    <textarea id="answerText" name="answerText" rows={4} defaultValue={previousAnswer} required />
 
-                <button type="submit">Run with OpenAI</button>
-              </form>
+                    <button type="submit">Score answer</button>
+                  </form>
 
-              <h2>Submit Answer</h2>
-              <form action={submitAnswerAction} className="runtime-answer-form">
-                <input type="hidden" name="benchmarkId" value={benchmark.id} />
-                <input type="hidden" name="caseId" value={selectedCase.id} />
+                  {hasScoreResult ? (
+                    <div className="run-result-block">
+                      <h3>Manual Result</h3>
+                      <dl className="benchmark-detail-list">
+                        <div>
+                          <dt>Outcome</dt>
+                          <dd className={resultCorrect ? "result-correct" : "result-incorrect"}>
+                            {resultCorrect ? "correct" : "incorrect"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Score</dt>
+                          <dd>{resultScoreParam || "0"}</dd>
+                        </div>
+                        <div>
+                          <dt>Expected answer</dt>
+                          <dd>
+                            <code>{resultExpectedAnswer}</code>
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Submitted answer</dt>
+                          <dd>
+                            <pre className="contract-code-block">{previousAnswer || "(empty)"}</pre>
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Message</dt>
+                          <dd>{resultMessage || "No message."}</dd>
+                        </div>
+                      </dl>
+                    </div>
+                  ) : (
+                    <p className="subtle">Submit a manual answer to view score and expected answer.</p>
+                  )}
+                </section>
 
-                <label htmlFor="answerText">Answer text</label>
-                <textarea id="answerText" name="answerText" rows={4} defaultValue={previousAnswer} required />
+                <section className="run-panel">
+                  <h2>Model Run</h2>
+                  <form action={runWithOpenAiAction} className="runtime-answer-form">
+                    <input type="hidden" name="benchmarkId" value={benchmark.id} />
+                    <input type="hidden" name="caseId" value={selectedCase.id} />
 
-                <button type="submit">Score answer</button>
-              </form>
+                    <label htmlFor="modelId">Model ID</label>
+                    <input id="modelId" name="modelId" type="text" defaultValue={selectedModelId} />
+
+                    <button type="submit">Run with OpenAI</button>
+                  </form>
+
+                  {providerSubmitStatus === "error" ? (
+                    <div className="run-result-block">
+                      <h3>Model Result</h3>
+                      <p className="history-warning" role="status">
+                        {providerError || "Provider execution failed."}
+                      </p>
+                      {providerDurationMs.length > 0 ? <p className="subtle">Duration: {providerDurationMs}ms</p> : null}
+                    </div>
+                  ) : null}
+
+                  {hasProviderScoreResult ? (
+                    <div className="run-result-block">
+                      <h3>Model Result</h3>
+                      <dl className="benchmark-detail-list">
+                        <div>
+                          <dt>Provider</dt>
+                          <dd>
+                            <code>{OPENAI_PROVIDER_ID}</code>
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Model</dt>
+                          <dd>
+                            <code>{selectedModelId}</code>
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Outcome</dt>
+                          <dd className={providerResultCorrect ? "result-correct" : "result-incorrect"}>
+                            {providerResultCorrect ? "correct" : "incorrect"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Score</dt>
+                          <dd>{providerResultScore || "0"}</dd>
+                        </div>
+                        <div>
+                          <dt>Expected answer</dt>
+                          <dd>
+                            <code>{providerResultExpectedAnswer}</code>
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Output text</dt>
+                          <dd>
+                            <pre className="contract-code-block">{providerOutputText || "(empty)"}</pre>
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Duration</dt>
+                          <dd>{providerDurationMs || "0"}ms</dd>
+                        </div>
+                      </dl>
+                    </div>
+                  ) : (
+                    <p className="subtle">Run with OpenAI to view output, score, and expected answer.</p>
+                  )}
+                </section>
+              </div>
             </section>
           ) : runtimeCases.length > 0 ? (
             <p className="subtle">Select a case to view prompt and submit an answer.</p>
-          ) : null}
-
-          {providerSubmitStatus === "error" ? (
-            <section>
-              <h2>Provider Result</h2>
-              <p className="history-warning" role="status">
-                {providerError || "Provider execution failed."}
-              </p>
-              {providerDurationMs.length > 0 ? <p className="subtle">Duration: {providerDurationMs}ms</p> : null}
-            </section>
-          ) : null}
-
-          {hasProviderScoreResult ? (
-            <section>
-              <h2>Provider Result</h2>
-              <dl className="benchmark-detail-list">
-                <div>
-                  <dt>provider</dt>
-                  <dd>{OPENAI_PROVIDER_ID}</dd>
-                </div>
-                <div>
-                  <dt>modelId</dt>
-                  <dd>
-                    <code>{selectedModelId}</code>
-                  </dd>
-                </div>
-                <div>
-                  <dt>outputText</dt>
-                  <dd>
-                    <pre className="contract-code-block">{providerOutputText || "(empty)"}</pre>
-                  </dd>
-                </div>
-                <div>
-                  <dt>correct</dt>
-                  <dd>{providerResultCorrect ? "true" : "false"}</dd>
-                </div>
-                <div>
-                  <dt>score</dt>
-                  <dd>{providerResultScore || "0"}</dd>
-                </div>
-                <div>
-                  <dt>expectedAnswer</dt>
-                  <dd>
-                    <code>{providerResultExpectedAnswer}</code>
-                  </dd>
-                </div>
-                <div>
-                  <dt>durationMs</dt>
-                  <dd>{providerDurationMs || "0"}</dd>
-                </div>
-              </dl>
-            </section>
-          ) : null}
-
-          {hasScoreResult ? (
-            <section>
-              <h2>Result</h2>
-              <dl className="benchmark-detail-list">
-                <div>
-                  <dt>correct</dt>
-                  <dd>{resultCorrect ? "true" : "false"}</dd>
-                </div>
-                <div>
-                  <dt>score</dt>
-                  <dd>{resultScoreParam || "0"}</dd>
-                </div>
-                <div>
-                  <dt>expectedAnswer</dt>
-                  <dd>
-                    <code>{resultExpectedAnswer}</code>
-                  </dd>
-                </div>
-                <div>
-                  <dt>message</dt>
-                  <dd>{resultMessage || "No message."}</dd>
-                </div>
-              </dl>
-            </section>
           ) : null}
 
           <section>

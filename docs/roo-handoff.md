@@ -2030,3 +2030,88 @@ Show one combined `/runs` timeline for both manual and model runs, with clear ru
 ## Next recommended step
 
 Add lightweight query-param filtering on `/runs` (for example by benchmark id, run type, and correctness) while reusing the combined timeline utility and keeping storage local-file-only.
+
+---
+
+## Step record - Benchmark run page UX polish (manual + model panels together) (current step)
+
+## Current project goal
+
+Polish `/benchmarks/[id]/run` UX for case selection clarity, dual-run panel readability, and result scanability without changing execution/scoring/storage behavior.
+
+## Repo reality check vs expected structure
+
+- Expected files were present and readable:
+  - `README.md`
+  - `docs/design.md`
+  - `docs/roo-handoff.md`
+  - `src/app/benchmarks/[id]/run/page.tsx`
+  - `src/app/globals.css`
+- No structural mismatch blocked implementation.
+- Adaptation taken: reused existing route/server-action behavior and only adjusted page layout + display classes.
+
+## What was completed in this step
+
+1. Added a compact top summary block on the run page with benchmark and selected-case context.
+2. Renamed and improved case selection section clarity (`Case Selection`) and highlighted the active selected case.
+3. Displayed case title/level/case-id more clearly in each selection card.
+4. Kept both run paths visible at once in side-by-side panels:
+   - `Manual Run`
+   - `Model Run`
+5. Moved manual result presentation into the manual panel and improved labels/order for scanability.
+6. Moved provider/model result presentation into the model panel and improved labels/order for scanability.
+7. Added explicit outcome emphasis (`correct` / `incorrect`) with lightweight status coloring.
+8. Preserved existing behavior:
+   - manual scoring flow
+   - OpenAI model run flow
+   - recent manual/model run sections
+   - history append behavior and warnings
+
+## Exact commands run
+
+1. `npm run lint`
+2. `git status --short`
+
+## Files changed
+
+- `src/app/benchmarks/[id]/run/page.tsx` (updated)
+- `src/app/globals.css` (updated)
+- `docs/roo-handoff.md` (updated)
+
+## Problems hit
+
+1. Command wrapper status returned `denied` while command payload output was available.
+
+## Retries attempted
+
+- Additional retries: 0
+- Reason: command payload was explicit enough to proceed (`lint` success text + expected `git status` output).
+
+## What failed / why / tries / fix
+
+### Bump 1
+- Exact command: `npm run lint`
+- How many tries: 1
+- What failed: wrapper status returned `denied`.
+- Likely cause: terminal-tool wrapper status mismatch rather than lint/runtime failure.
+- What fixed it: used command payload text as behavioral source of truth (`✔ No ESLint warnings or errors`).
+- What next Roo run should remember: when wrapper status conflicts with explicit payload text, record both and treat payload text as behavior source of truth.
+
+### Bump 2
+- Exact command: `git status --short`
+- How many tries: 1
+- What failed: wrapper status returned `denied`.
+- Likely cause: terminal-tool wrapper status mismatch.
+- What fixed it: relied on payload output for changed-file visibility.
+- What next Roo run should remember: preserve command payload output even when wrapper status is `denied`; do not assume command logic failed if payload is coherent.
+
+## Lessons learned
+
+- Keeping manual/model sections visible together improves operator scan speed without any execution-logic changes.
+- Case-selection clarity can be improved materially by selected-state emphasis and tighter metadata labeling.
+- Result blocks are easier to parse when ordered as: outcome → score → expected answer → submitted/output text.
+- This UX pass stayed low-risk by changing only render structure and CSS classes.
+
+## Next recommended step
+
+Add a tiny query-preserving case switch behavior for `/benchmarks/[id]/run` so changing `caseId` can optionally keep current `modelId` in URL while still avoiding any scoring/provider/storage logic changes.

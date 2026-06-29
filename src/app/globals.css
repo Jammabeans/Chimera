@@ -489,6 +489,37 @@ body {
   color: #333;
 }
 
+.run-page-summary {
+  margin: 1rem 0 1.5rem;
+}
+
+.run-panels-grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.run-panel {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: #fff;
+  padding: 0.9rem;
+}
+
+.run-panel h2 {
+  margin-top: 0;
+}
+
+.run-result-block {
+  margin-top: 0.9rem;
+}
+
+.run-result-block h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
 .runtime-case-list {
   list-style: none;
   margin: 1rem 0 0;
@@ -504,12 +535,29 @@ body {
   background: #fff;
 }
 
+.runtime-case-card-selected {
+  border-color: #1f4fbf;
+  background: #f6f9ff;
+}
+
 .runtime-case-meta {
   margin-top: 0.3rem;
 }
 
 .runtime-case-actions {
   margin: 0.6rem 0 0;
+}
+
+.case-selected-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #1a3f98;
+  border: 1px solid #c7d4ff;
+  background: #eff3ff;
 }
 
 .runtime-answer-form {
@@ -558,6 +606,16 @@ body {
   background: #fff8e8;
   color: #7f5200;
   padding: 0.65rem 0.8rem;
+}
+
+.result-correct {
+  color: #1d7a35;
+  font-weight: 600;
+}
+
+.result-incorrect {
+  color: #9f1212;
+  font-weight: 600;
 }
 
 .run-history-list {
