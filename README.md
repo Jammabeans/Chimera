@@ -202,6 +202,52 @@ Static JSON scope boundaries in this step:
 - manual run UI only
 - no API routes
 
+## Provider execution contract (v1)
+
+Chimera Core now defines a minimal provider/model execution contract for future model-driven benchmark runs.
+
+- Contract types are defined in [`src/types/providerExecutionContract.ts`](src/types/providerExecutionContract.ts).
+- A typed example object set is provided in [`src/core/providers/providerExecutionContractExample.ts`](src/core/providers/providerExecutionContractExample.ts).
+- The contract page at [`/contract`](src/app/contract/page.tsx) now documents all four contract surfaces:
+  - external manifest contract
+  - runtime module contract
+  - static runtime JSON contract
+  - provider/model execution contract
+
+Minimal provider execution v1 shape:
+
+- Execution request:
+  - `benchmarkId`
+  - `caseId`
+  - `prompt`
+  - `providerId`
+  - `modelId`
+- Execution response:
+  - `outputText`
+  - optional `rawResponseMetadata`
+- Execution metadata:
+  - `timestamp`
+  - `durationMs`
+  - `providerId`
+  - `modelId`
+- Scored model run result:
+  - `benchmarkId`
+  - `caseId`
+  - `prompt`
+  - `outputText`
+  - `expectedAnswer`
+  - `correct`
+  - `score`
+  - `metadata`
+
+Provider execution scope boundaries in this step:
+
+- types/docs only
+- no provider SDK/API calls
+- no environment variable handling
+- no provider UI wiring
+- no automated execution flow
+
 ## Manual run flow (v1)
 
 Chimera Core now includes the first manual benchmark run route at `/benchmarks/[id]/run`.

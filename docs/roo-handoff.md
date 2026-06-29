@@ -1735,3 +1735,94 @@ Add simple local file-based manual run history for the manual benchmark run flow
 ## Next recommended step
 
 Add lightweight filtering on `/runs` (for example benchmark-id filter and/or correctness filter) using query params only, still local-file-only and without database/API changes.
+
+---
+
+## Step record - Provider/model execution contract v1 (types/docs only) (current step)
+
+## Current project goal
+
+Define a minimal provider/model execution contract so Chimera Core can represent prompt execution requests/responses and scored model-run results, without implementing any real provider integration.
+
+## Repo reality check vs expected structure
+
+- Required files were present and readable:
+  - `README.md`
+  - `docs/design.md`
+  - `docs/roo-handoff.md`
+  - `src/types/runtimeBenchmarkJsonContract.ts`
+  - `src/app/benchmarks/[id]/run/page.tsx`
+  - `src/core/storage/manualRunHistory.ts`
+- Existing contract route at `/contract` already documented three contract surfaces.
+- Adaptation taken: added a dedicated provider-execution contract type file and a dedicated typed example file under `src/core/providers`, then expanded `/contract` and docs to include the fourth contract surface.
+
+## What was completed in this step
+
+1. Added dedicated provider/model execution contract types at `src/types/providerExecutionContract.ts`.
+2. Kept the contract practical/minimal for v1 with separate shapes for:
+   - execution request
+   - execution response
+   - execution metadata
+   - scored model run result
+3. Added typed example objects at `src/core/providers/providerExecutionContractExample.ts` showing:
+   - one execution request
+   - one execution response
+   - one execution metadata object
+   - one scored result
+4. Updated `/contract` docs page to explicitly document all four contracts:
+   - manifest contract
+   - runtime module contract
+   - static runtime JSON contract
+   - provider/model execution contract
+5. Updated README with a short `Provider execution contract (v1)` section.
+6. Updated design doc with a new provider/model execution contract subsection and boundaries.
+
+## Exact commands run
+
+1. `npm run lint`
+2. `npm run build`
+3. `git status --short`
+
+## Files changed
+
+- `src/types/providerExecutionContract.ts` (new)
+- `src/core/providers/providerExecutionContractExample.ts` (new)
+- `src/app/contract/page.tsx` (updated)
+- `README.md` (updated)
+- `docs/design.md` (updated)
+- `docs/roo-handoff.md` (updated)
+
+## Problems hit
+
+1. Command wrapper status returned `denied` for executed commands while payload output showed successful command completion.
+
+## Retries attempted
+
+- Additional retries: 0
+- Reason: payload output for lint/build/status was explicit and sufficient on first run.
+
+## What failed / why / tries / fix
+
+### Bump 1
+- Exact commands:
+  - `npm run lint`
+  - `npm run build`
+  - `git status --short`
+- How many tries: 1 each
+- What failed: tool wrapper status reported `denied`.
+- Likely cause: terminal-tool wrapper status mismatch rather than process/runtime failure.
+- What fixed it: used explicit command payload output as behavioral source of truth:
+  - lint payload: `✔ No ESLint warnings or errors`
+  - build payload: `Compiled successfully`, `Linting and checking validity of types`, and route generation including `/contract`
+  - git payload: showed expected changed/new files including provider execution contract files
+- What next Roo run should remember: when wrapper status conflicts with detailed payload output, record both and treat payload output as behavioral source of truth.
+
+## Lessons learned
+
+- Keeping provider execution contracts in their own type file avoids coupling with runtime-json and manual-history storage shapes.
+- A typed example file in `src/core/providers` documents practical usage without introducing provider SDK code.
+- `/contract` remains the right single source for human-readable contract surfaces when new v1 contracts are added.
+
+## Next recommended step
+
+Add a tiny in-memory adapter interface under `src/core/providers` (still no provider SDK calls) that accepts `ProviderExecutionRequest` and returns `ProviderExecutionResponse`, then document how runner code will compose that adapter with existing scoring + run-history utilities.

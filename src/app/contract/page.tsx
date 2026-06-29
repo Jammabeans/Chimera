@@ -1,4 +1,10 @@
 import { EXTERNAL_BENCHMARK_MANIFEST_EXAMPLE } from "@/core/registry/externalBenchmarkManifestExample";
+import {
+  PROVIDER_EXECUTION_METADATA_EXAMPLE,
+  PROVIDER_EXECUTION_REQUEST_EXAMPLE,
+  PROVIDER_EXECUTION_RESPONSE_EXAMPLE,
+  SCORED_MODEL_RUN_RESULT_EXAMPLE,
+} from "@/core/providers/providerExecutionContractExample";
 import { RUNTIME_BENCHMARK_JSON_ARTIFACT_EXAMPLE } from "@/core/runner/runtimeBenchmarkJsonArtifactExample";
 import { RUNTIME_BENCHMARK_MODULE_EXAMPLE } from "@/core/runner/runtimeBenchmarkModuleExample";
 import { RUNTIME_BENCHMARK_JSON_FILENAME } from "@/types/runtimeBenchmarkJsonContract";
@@ -34,6 +40,23 @@ const RUNTIME_JSON_CASE_FIELDS = [
 
 const RUNTIME_JSON_SCORING_MODES = ["exact-text"] as const;
 
+const PROVIDER_EXECUTION_REQUEST_FIELDS = ["benchmarkId", "caseId", "prompt", "providerId", "modelId"] as const;
+
+const PROVIDER_EXECUTION_RESPONSE_FIELDS = ["outputText", "rawResponseMetadata (optional)"] as const;
+
+const PROVIDER_EXECUTION_METADATA_FIELDS = ["timestamp", "durationMs", "providerId", "modelId"] as const;
+
+const SCORED_MODEL_RUN_RESULT_FIELDS = [
+  "benchmarkId",
+  "caseId",
+  "prompt",
+  "outputText",
+  "expectedAnswer",
+  "correct",
+  "score",
+  "metadata",
+] as const;
+
 const EXAMPLE_FOLDER_LAYOUT = `external-benchmark-repo/
   benchmark.manifest.json
   src/
@@ -56,8 +79,8 @@ export default function ContractPage() {
     <main className="container">
       <h1>Benchmark Contracts (v1)</h1>
       <p className="subtle">
-        Chimera Core currently defines two complementary contracts: a benchmark repo manifest contract and a minimal
-        runtime benchmark contract for deterministic, plain-text manual scoring.
+        Chimera Core currently defines four complementary contracts: a benchmark repo manifest contract, a runtime
+        module contract, a static runtime JSON contract, and a provider/model execution contract.
       </p>
 
       <section className="contract-section" aria-label="Required manifest fields">
@@ -173,6 +196,71 @@ export default function ContractPage() {
         <h3>Sample {RUNTIME_BENCHMARK_JSON_FILENAME}</h3>
         <pre className="contract-code-block">
           <code>{JSON.stringify(RUNTIME_BENCHMARK_JSON_ARTIFACT_EXAMPLE, null, 2)}</code>
+        </pre>
+      </section>
+
+      <section className="contract-section" aria-label="Provider model execution contract">
+        <h2>4) Provider/model execution contract (v1)</h2>
+        <p className="subtle">
+          This contract defines how Core asks a provider/model to run one benchmark prompt and how the response and
+          scored result are recorded. Provider integration and execution orchestration are intentionally out of scope in
+          this step.
+        </p>
+
+        <h3>Execution request fields</h3>
+        <ul className="contract-field-list">
+          {PROVIDER_EXECUTION_REQUEST_FIELDS.map((field) => (
+            <li key={field}>
+              <code>{field}</code>
+            </li>
+          ))}
+        </ul>
+
+        <h3>Execution response fields</h3>
+        <ul className="contract-field-list">
+          {PROVIDER_EXECUTION_RESPONSE_FIELDS.map((field) => (
+            <li key={field}>
+              <code>{field}</code>
+            </li>
+          ))}
+        </ul>
+
+        <h3>Execution metadata fields</h3>
+        <ul className="contract-field-list">
+          {PROVIDER_EXECUTION_METADATA_FIELDS.map((field) => (
+            <li key={field}>
+              <code>{field}</code>
+            </li>
+          ))}
+        </ul>
+
+        <h3>Scored model run result fields</h3>
+        <ul className="contract-field-list">
+          {SCORED_MODEL_RUN_RESULT_FIELDS.map((field) => (
+            <li key={field}>
+              <code>{field}</code>
+            </li>
+          ))}
+        </ul>
+
+        <h3>Sample execution request</h3>
+        <pre className="contract-code-block">
+          <code>{JSON.stringify(PROVIDER_EXECUTION_REQUEST_EXAMPLE, null, 2)}</code>
+        </pre>
+
+        <h3>Sample execution response</h3>
+        <pre className="contract-code-block">
+          <code>{JSON.stringify(PROVIDER_EXECUTION_RESPONSE_EXAMPLE, null, 2)}</code>
+        </pre>
+
+        <h3>Sample execution metadata</h3>
+        <pre className="contract-code-block">
+          <code>{JSON.stringify(PROVIDER_EXECUTION_METADATA_EXAMPLE, null, 2)}</code>
+        </pre>
+
+        <h3>Sample scored model run result</h3>
+        <pre className="contract-code-block">
+          <code>{JSON.stringify(SCORED_MODEL_RUN_RESULT_EXAMPLE, null, 2)}</code>
         </pre>
       </section>
     </main>

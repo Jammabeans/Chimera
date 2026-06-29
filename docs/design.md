@@ -143,6 +143,54 @@ Notes for this version:
 - First manual run UI now exists at `/benchmarks/[id]/run` and uses cached `runtime-benchmark.json`.
 - No API routes, dynamic loading, or model API behavior is added in this step.
 
+### Provider/model execution contract (v1)
+
+Chimera Core now defines a separate provider/model execution contract for future model-driven benchmark runs.
+
+Minimal execution request shape:
+
+- `benchmarkId`
+- `caseId`
+- `prompt`
+- `providerId`
+- `modelId`
+
+Minimal execution response shape:
+
+- `outputText`
+- optional `rawResponseMetadata`
+
+Minimal execution metadata shape:
+
+- `timestamp`
+- `durationMs`
+- `providerId`
+- `modelId`
+
+Minimal scored model run result shape:
+
+- `benchmarkId`
+- `caseId`
+- `prompt`
+- `outputText`
+- `expectedAnswer`
+- `correct`
+- `score`
+- `metadata`
+
+Current provider execution contract artifacts:
+
+- Type contract: `src/types/providerExecutionContract.ts`
+- Typed example objects: `src/core/providers/providerExecutionContractExample.ts`
+- Human-readable contract route (all contract surfaces): `/contract`
+
+Notes for this version:
+
+- Contract remains intentionally small and practical for v1.
+- This is a types/docs-only addition.
+- No provider SDK/API integration is implemented.
+- No environment variable handling, provider UI wiring, or automated execution flow is added in this step.
+
 ### Manual benchmark run flow (v1)
 
 - Route-level run page exists at `/benchmarks/[id]/run`.
