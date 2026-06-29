@@ -4,7 +4,7 @@ Chimera Core is the browser-based host web app for the Chimera benchmark system.
 
 This repository contains only the core Next.js application. Benchmark implementations are planned to live in separate repositories and be loaded through a registry-driven workflow.
 
-- The app now uses a simple shared shell with a top navigation (`Home`, `Readiness`, `Contract`, `Registry`, `Sync`, `Cache`) and a wider main content area for readability.
+- The app now uses a simple shared shell with a top navigation (`Home`, `Readiness`, `Contract`, `Registry`, `Sync`, `Cache`, `Runs`) and a wider main content area for readability.
 
 ## Benchmark registry (v1)
 
@@ -224,6 +224,10 @@ v1 run behavior:
   - `score`
   - `expectedAnswer`
   - `message`
+- after scoring, the page attempts to append a local history record to `data/manual-run-history.json`
+- history write failures are non-fatal: score result still renders and a small warning is shown
+- run page includes a small benchmark-scoped recent runs list (latest 5)
+- global history page is available at `/runs` in reverse chronological order
 
 Validation for cached runtime JSON is intentionally minimal/practical:
 
@@ -236,6 +240,29 @@ Validation for cached runtime JSON is intentionally minimal/practical:
 If runtime JSON is missing/invalid, the run page shows a clean message and does not crash.
 
 Benchmark detail pages now include a small link to the manual run page.
+
+## Manual run history (v1)
+
+Chimera Core now stores manual run history in one local flat JSON file.
+
+- Storage file: [`data/manual-run-history.json`](data/manual-run-history.json)
+- Storage utility: [`manualRunHistory`](src/core/storage/manualRunHistory.ts)
+- Scope is intentionally narrow:
+  - local file only
+  - manual benchmark runs only
+  - no database
+  - no model API integration
+- Stored fields include:
+  - `timestamp`
+  - `benchmarkId`
+  - `benchmarkName`
+  - `caseId`
+  - `caseTitle`
+  - `submittedAnswer`
+  - `expectedAnswer`
+  - `correct`
+  - `score`
+  - `scoringMode`
 
 ## Install
 

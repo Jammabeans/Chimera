@@ -543,6 +543,52 @@ body {
   border-color: #1842a3;
 }
 
+.history-warning {
+  margin: 0.75rem 0 1rem;
+  border: 1px solid #f0dbac;
+  border-radius: 8px;
+  background: #fff8e8;
+  color: #7f5200;
+  padding: 0.65rem 0.8rem;
+}
+
+.run-history-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.run-history-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.8rem;
+  background: #fff;
+}
+
+.run-history-card dl {
+  margin: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.run-history-card dl > div {
+  display: grid;
+  grid-template-columns: minmax(150px, 230px) 1fr;
+  gap: 0.6rem;
+}
+
+.run-history-card dt {
+  font-weight: 600;
+  color: #222;
+}
+
+.run-history-card dd {
+  margin: 0;
+  color: #333;
+}
+
 @media (max-width: 640px) {
   .app-shell-inner {
     align-items: flex-start;
@@ -553,7 +599,8 @@ body {
   .readiness-card dl > div,
   .cache-inspection-card dl > div,
   .sync-plan-card dl > div,
-  .benchmark-detail-list > div {
+  .benchmark-detail-list > div,
+  .run-history-card dl > div {
     grid-template-columns: 1fr;
     gap: 0.35rem;
   }

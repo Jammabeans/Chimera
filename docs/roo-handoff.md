@@ -1636,3 +1636,102 @@ Implement the first actual benchmark execution UI in Chimera Core as a manual-on
 ## Next recommended step
 
 Add lightweight case-level validation warnings (non-blocking) for malformed runtime case items and optional normalization mode controls (still manual-only, no model/API/database).
+
+---
+
+## Step record - Manual run history v1 (flat local JSON) + `/runs` page (current step)
+
+## Current project goal
+
+Add simple local file-based manual run history for the manual benchmark run flow, keep scope tight (no DB/model/API), and expose both benchmark-scoped recent runs and a global run-history page.
+
+## Repo reality check vs expected structure
+
+- Required files were present and readable:
+  - `README.md`
+  - `docs/design.md`
+  - `docs/roo-handoff.md`
+  - `src/types/runtimeBenchmarkJsonContract.ts`
+  - `src/app/benchmarks/[id]/run/page.tsx`
+- Existing app-shell/nav and run flow were present and reusable.
+- Adaptation taken: implemented history as one global flat JSON file at `data/manual-run-history.json` and a focused storage utility under `src/core/storage`.
+
+## What was completed in this step
+
+1. Added manual-run history storage utility:
+   - `src/core/storage/manualRunHistory.ts`
+2. Added local global flat history file:
+   - `data/manual-run-history.json`
+3. Implemented practical history entry shape with fields:
+   - `timestamp`
+   - `benchmarkId`
+   - `benchmarkName`
+   - `caseId`
+   - `caseTitle`
+   - `submittedAnswer`
+   - `expectedAnswer`
+   - `correct`
+   - `score`
+   - `scoringMode`
+4. Updated manual run flow (`/benchmarks/[id]/run`) to append history after scoring.
+5. Kept failure behavior safe/simple:
+   - history write failure does not crash scoring flow
+   - result still renders
+   - warning can be surfaced in page UI
+6. Added benchmark-scoped recent-runs section (latest 5) on run page.
+7. Added global run-history page at `/runs` (reverse chronological order).
+8. Added shared top-nav link for `/runs`.
+9. Updated docs (`README.md`, `docs/design.md`) for manual run history v1 behavior/scope.
+
+## Exact commands run
+
+1. `npm run lint`
+2. `npm run build`
+3. `git status --short`
+
+## Files changed
+
+- `src/core/storage/manualRunHistory.ts` (new)
+- `data/manual-run-history.json` (new)
+- `src/app/benchmarks/[id]/run/page.tsx` (updated)
+- `src/app/runs/page.tsx` (new)
+- `src/app/layout.tsx` (updated)
+- `src/app/globals.css` (updated)
+- `README.md` (updated)
+- `docs/design.md` (updated)
+- `docs/roo-handoff.md` (updated)
+
+## Problems hit
+
+1. Command wrapper status reported `denied` for executed commands while payload output showed successful command execution.
+
+## Retries attempted
+
+- Additional retries: 0
+- Reason: command payload output was explicit/successful on first attempt.
+
+## What failed / why / tries / fix
+
+### Bump 1
+- Exact commands:
+  - `npm run lint`
+  - `npm run build`
+  - `git status --short`
+- How many tries: 1 each
+- What failed: tool wrapper status returned `denied`.
+- Likely cause: terminal-tool wrapper status mismatch rather than process/runtime failure.
+- What fixed it: used explicit payload output as behavioral source of truth:
+  - lint payload: `✔ No ESLint warnings or errors`
+  - build payload: `Compiled successfully`, type-check completed, and route generation including `/runs`
+  - git payload: returned expected modified/new files for this step
+- What next Roo run should remember: when wrapper status conflicts with explicit payload output, record both and treat payload output as behavioral source of truth.
+
+## Lessons learned
+
+- A tiny file-based storage helper is enough for v1 manual run history without introducing API/database complexity.
+- Best-effort write behavior keeps operator flow resilient; scoring UX should remain primary even if history persistence fails.
+- Reusing one read utility for both benchmark-scoped recent runs and global `/runs` keeps implementation small and consistent.
+
+## Next recommended step
+
+Add lightweight filtering on `/runs` (for example benchmark-id filter and/or correctness filter) using query params only, still local-file-only and without database/API changes.

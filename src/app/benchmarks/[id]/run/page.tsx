@@ -2,6 +2,7 @@ import { getBenchmarkById } from "@/core/registry/getBenchmarkById";
 import { getBenchmarkDetailState } from "@/core/registry/getBenchmarkDetailState";
 import { getRuntimeBenchmarkJsonFromCache } from "@/core/registry/getRuntimeBenchmarkJsonFromCache";
 import { scoreRuntimeBenchmarkCase } from "@/core/runner/scoreRuntimeBenchmarkCase";
+import { appendManualRunHistory, readRecentManualRunsForBenchmark } from "@/core/storage/manualRunHistory";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
@@ -17,6 +18,7 @@ interface BenchmarkRunPageProps {
     resultScore?: string | string[];
     resultExpectedAnswer?: string | string[];
     resultMessage?: string | string[];
+    historyWarning?: string | string[];
   };
 }
 
@@ -54,6 +56,20 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
     }
 
     const result = scoreRuntimeBenchmarkCase(runtimeState.artifact, caseId, answerText);
+    const benchmarkCase = runtimeState.artifact.cases.find((item) => item.id === caseId);
+
+    const historyAppendResult = appendManualRunHistory({
+      timestamp: new Date().toISOString(),
+      benchmarkId,
+      benchmarkName: runtimeState.artifact.benchmarkName,
+      caseId,
+      caseTitle: benchmarkCase?.title ?? "",
+      submittedAnswer: answerText,
+      expectedAnswer: result.expectedAnswer,
+      correct: result.correct,
+      score: result.score,
+      scoringMode: runtimeState.artifact.scoringMode,
+    });
 
     responseParams.set("submitStatus", "scored");
     responseParams.set("resultCorrect", String(result.correct));
@@ -61,6 +77,10 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
     responseParams.set("resultExpectedAnswer", result.expectedAnswer);
     responseParams.set("resultMessage", result.message);
     responseParams.set("answerText", answerText);
+
+    if (historyAppendResult.warning) {
+      responseParams.set("historyWarning", historyAppendResult.warning);
+    }
 
     redirect(`/benchmarks/${benchmarkId}/run?${responseParams.toString()}`);
   }
@@ -84,6 +104,10 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
   const resultScoreParam = toSingleSearchParam(searchParams?.resultScore);
   const resultExpectedAnswer = toSingleSearchParam(searchParams?.resultExpectedAnswer);
   const resultMessage = toSingleSearchParam(searchParams?.resultMessage);
+  const historyWarningFromSubmit = toSingleSearchParam(searchParams?.historyWarning);
+
+  const recentRunsState = readRecentManualRunsForBenchmark(benchmark.id, 5);
+  const historyWarning = historyWarningFromSubmit || recentRunsState.warning || "";
 
   const hasScoreResult = submitStatus.length > 0;
   const resultCorrect = resultCorrectParam === "true";
@@ -146,6 +170,12 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
         </p>
       ) : (
         <>
+          {historyWarning.length > 0 ? (
+            <p className="history-warning" role="status">
+              {historyWarning}
+            </p>
+          ) : null}
+
           <section>
             <h2>Available Cases</h2>
             {runtimeCases.length === 0 ? (
@@ -237,6 +267,46 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
               </dl>
             </section>
           ) : null}
+
+          <section>
+            <h2>Recent Runs (this benchmark)</h2>
+            {recentRunsState.entries.length === 0 ? (
+              <p className="subtle">No recent manual runs found for this benchmark yet.</p>
+            ) : (
+              <ul className="run-history-list">
+                {recentRunsState.entries.map((entry, index) => (
+                  <li
+                    key={`${entry.timestamp}-${entry.benchmarkId}-${entry.caseId}-${index}`}
+                    className="run-history-card"
+                  >
+                    <dl>
+                      <div>
+                        <dt>Timestamp</dt>
+                        <dd>{entry.timestamp}</dd>
+                      </div>
+                      <div>
+                        <dt>Case</dt>
+                        <dd>
+                          {entry.caseTitle || "(untitled case)"} <span className="subtle">({entry.caseId})</span>
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Correct</dt>
+                        <dd>{entry.correct ? "true" : "false"}</dd>
+                      </div>
+                      <div>
+                        <dt>Score</dt>
+                        <dd>{entry.score}</dd>
+                      </div>
+                    </dl>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="subtle">
+              <Link href="/runs">View global run history</Link>
+            </p>
+          </section>
         </>
       )}
     </main>

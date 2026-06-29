@@ -155,10 +155,16 @@ Notes for this version:
   - answer input is plain text only
   - scoring is exact string equality against case `expectedAnswer`
   - result fields are `correct`, `score`, `expectedAnswer`, `message`
+  - after scoring, run result is appended to local file history (best-effort)
 - Runtime JSON loading/validation is implemented in a small server utility:
   - `src/core/registry/getRuntimeBenchmarkJsonFromCache.ts`
 - Scoring logic is implemented in a small core helper:
   - `src/core/runner/scoreRuntimeBenchmarkCase.ts`
+- Manual run history storage utility is implemented in:
+  - `src/core/storage/manualRunHistory.ts`
+- Global history view is available at:
+  - `/runs`
+- Benchmark run page also shows benchmark-scoped recent runs (latest 5 entries).
 
 Validation remains practical/minimal for v1:
 
@@ -171,12 +177,12 @@ Validation remains practical/minimal for v1:
 Out-of-scope in this version:
 
 - no model/API providers
-- no database persistence/history
+- no database persistence (history is local JSON file only)
 - no background run orchestration
 
 ## Scoring/results UI (later)
 
-Scoring details, run history, and richer results views will be added in later iterations.
+Scoring details and richer result analysis views beyond current manual-run and file-history pages will be added in later iterations.
 
 ## Benchmark detail route (current)
 

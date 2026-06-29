@@ -26,6 +26,7 @@ export default function RootLayout({
                 <Link href="/registry">Registry</Link>
                 <Link href="/sync">Sync</Link>
                 <Link href="/cache">Cache</Link>
+                <Link href="/runs">Runs</Link>
               </nav>
             </div>
           </header>
