@@ -211,7 +211,8 @@ Chimera Core now includes the first actual provider execution path using OpenAI.
 - Server-side provider execution + scoring composition lives in [`src/core/runner/executeProviderBenchmarkCase.ts`](src/core/runner/executeProviderBenchmarkCase.ts).
 - The benchmark run page at [`/benchmarks/[id]/run`](src/app/benchmarks/[id]/run/page.tsx) now supports:
   - selecting one case
-  - entering a `modelId` (default: `gpt-4o-mini`)
+  - selecting a known OpenAI model from a compact dropdown (with pricing labels)
+  - choosing `Custom…` to manually enter any model id
   - `Run with OpenAI`
   - rendering provider output text
   - exact-text scoring against `expectedAnswer`

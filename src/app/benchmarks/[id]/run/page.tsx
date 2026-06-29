@@ -2,6 +2,7 @@ import { getBenchmarkById } from "@/core/registry/getBenchmarkById";
 import { getBenchmarkDetailState } from "@/core/registry/getBenchmarkDetailState";
 import { getRuntimeBenchmarkJsonFromCache } from "@/core/registry/getRuntimeBenchmarkJsonFromCache";
 import { OPENAI_PROVIDER_ID } from "@/core/providers/openaiProvider";
+import { formatOpenAiModelPricing, OPENAI_MODEL_CATALOG } from "@/core/providers/openAiModelCatalog";
 import { executeProviderBenchmarkCase } from "@/core/runner/executeProviderBenchmarkCase";
 import { scoreRuntimeBenchmarkCase } from "@/core/runner/scoreRuntimeBenchmarkCase";
 import { appendModelRunHistory, readRecentModelRunsForBenchmark } from "@/core/storage/modelRunHistory";
@@ -10,6 +11,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 const DEFAULT_OPENAI_MODEL_ID = "gpt-4o-mini" as const;
+const CUSTOM_OPENAI_MODEL_OPTION = "__custom__" as const;
 
 interface BenchmarkRunPageProps {
   params: {
@@ -104,7 +106,15 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
 
     const benchmarkId = toFormStringValue(formData.get("benchmarkId"));
     const caseId = toFormStringValue(formData.get("caseId"));
-    const modelIdInput = toFormStringValue(formData.get("modelId")).trim();
+    const knownModelId = toFormStringValue(formData.get("knownModelId")).trim();
+    const customModelId = toFormStringValue(formData.get("customModelId")).trim();
+    const legacyModelId = toFormStringValue(formData.get("modelId")).trim();
+    const modelIdInput =
+      knownModelId === CUSTOM_OPENAI_MODEL_OPTION
+        ? customModelId
+        : knownModelId.length > 0
+          ? knownModelId
+          : legacyModelId;
     const modelId = modelIdInput.length > 0 ? modelIdInput : DEFAULT_OPENAI_MODEL_ID;
 
     const responseParams = new URLSearchParams();
@@ -190,6 +200,12 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
 
   const selectedCaseId = toSingleSearchParam(searchParams?.caseId);
   const selectedModelId = toSingleSearchParam(searchParams?.modelId) || DEFAULT_OPENAI_MODEL_ID;
+  const selectedCatalogModel = OPENAI_MODEL_CATALOG.find((entry) => entry.modelId === selectedModelId) ?? null;
+  const modelSelectValue = selectedCatalogModel ? selectedCatalogModel.modelId : CUSTOM_OPENAI_MODEL_OPTION;
+  const customModelInputDefault = selectedCatalogModel ? "" : selectedModelId;
+  const selectedPricingLabel = selectedCatalogModel
+    ? formatOpenAiModelPricing(selectedCatalogModel)
+    : "Custom model pricing is not available in the built-in catalog.";
   const previousAnswer = toSingleSearchParam(searchParams?.answerText);
 
   const selectedCase = runtimeState.artifact?.cases.find((item) => item.id === selectedCaseId) ?? null;
@@ -346,7 +362,11 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
                       {selectedCase?.id === item.id ? (
                         <span className="case-selected-badge">Selected</span>
                       ) : (
-                        <Link href={`/benchmarks/${benchmark.id}/run?caseId=${encodeURIComponent(item.id)}`}>Select case</Link>
+                        <Link
+                          href={`/benchmarks/${benchmark.id}/run?caseId=${encodeURIComponent(item.id)}&modelId=${encodeURIComponent(selectedModelId)}`}
+                        >
+                          Select case
+                        </Link>
                       )}
                     </p>
                   </li>
@@ -439,8 +459,22 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
                     <input type="hidden" name="benchmarkId" value={benchmark.id} />
                     <input type="hidden" name="caseId" value={selectedCase.id} />
 
-                    <label htmlFor="modelId">Model ID</label>
-                    <input id="modelId" name="modelId" type="text" defaultValue={selectedModelId} />
+                    <label htmlFor="knownModelId">Model</label>
+                    <select id="knownModelId" name="knownModelId" defaultValue={modelSelectValue}>
+                      {OPENAI_MODEL_CATALOG.map((entry) => (
+                        <option key={entry.modelId} value={entry.modelId}>
+                          {entry.modelId} ({formatOpenAiModelPricing(entry)})
+                        </option>
+                      ))}
+                      <option value={CUSTOM_OPENAI_MODEL_OPTION}>Custom…</option>
+                    </select>
+
+                    <label htmlFor="customModelId">Custom model ID (used when “Custom…” is selected)</label>
+                    <input id="customModelId" name="customModelId" type="text" defaultValue={customModelInputDefault} />
+
+                    <p className="model-pricing-helper subtle">
+                      Pricing (USD per 1M tokens, input / cached input / output): {selectedPricingLabel}
+                    </p>
 
                     <button type="submit">Run with OpenAI</button>
                   </form>

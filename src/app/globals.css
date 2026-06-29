@@ -583,6 +583,19 @@ body {
   font: inherit;
 }
 
+.runtime-answer-form select {
+  width: 100%;
+  border: 1px solid #cfcfcf;
+  border-radius: 6px;
+  padding: 0.5rem 0.55rem;
+  font: inherit;
+  background: #fff;
+}
+
+.model-pricing-helper {
+  margin: 0;
+}
+
 .runtime-answer-form button {
   width: fit-content;
   border: 1px solid #1f4fbf;

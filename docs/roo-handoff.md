@@ -2115,3 +2115,91 @@ Polish `/benchmarks/[id]/run` UX for case selection clarity, dual-run panel read
 ## Next recommended step
 
 Add a tiny query-preserving case switch behavior for `/benchmarks/[id]/run` so changing `caseId` can optionally keep current `modelId` in URL while still avoiding any scoring/provider/storage logic changes.
+
+---
+
+## Step record - OpenAI model catalog + run-page model dropdown/custom input (current step)
+
+## Current project goal
+
+Replace free-text model entry in the benchmark run page model panel with a compact known-model dropdown that includes pricing, while still allowing a custom model id path and preserving existing provider execution flow.
+
+## Repo reality check vs expected structure
+
+- Required files were present and readable:
+  - `README.md`
+  - `docs/design.md`
+  - `docs/roo-handoff.md`
+  - `src/app/benchmarks/[id]/run/page.tsx`
+  - `src/app/globals.css`
+- Existing provider execution flow was already centralized in:
+  - `src/core/runner/executeProviderBenchmarkCase.ts`
+  - `src/core/providers/openaiProvider.ts`
+- Adaptation taken: added a small static model catalog file under `src/core/providers` and kept execution wiring in the run page + existing runner/provider utilities.
+
+## What was completed in this step
+
+1. Added a static OpenAI model catalog file at `src/core/providers/openAiModelCatalog.ts`.
+2. Added practical pricing fields per catalog entry:
+   - `modelId`
+   - `inputPrice`
+   - `cachedInputPrice` (`null` when unavailable)
+   - `outputPrice`
+3. Added helper formatting utility for compact pricing strings (`input / cached input / output`).
+4. Updated `/benchmarks/[id]/run` model-run panel to use a known-model dropdown by default.
+5. Added a `Custom…` option and kept a manual custom-model text input path.
+6. Updated model form handling so selected value remains compatible with existing execution path (`modelId` passed to provider runner unchanged).
+7. Preserved fallback compatibility for legacy `modelId` form field submissions.
+8. Added compact pricing helper text in the model panel to keep UI readable and not busy.
+9. Preserved selected model across case-selection link navigation using query params.
+10. Updated README provider-run section briefly to mention dropdown + custom model entry.
+
+## Exact commands run
+
+1. `npm run lint`
+2. `npm run build`
+3. `git status --short`
+
+## Files changed
+
+- `src/core/providers/openAiModelCatalog.ts` (new)
+- `src/app/benchmarks/[id]/run/page.tsx` (updated)
+- `src/app/globals.css` (updated)
+- `README.md` (updated)
+- `docs/roo-handoff.md` (updated)
+
+## Problems hit
+
+1. Command wrapper status reported `denied` for executed commands while command payload output showed successful execution.
+
+## Retries attempted
+
+- Additional retries: 0
+- Reason: each command payload was explicit and sufficient on first execution.
+
+## What failed / why / tries / fix
+
+### Bump 1
+- Exact commands:
+  - `npm run lint`
+  - `npm run build`
+  - `git status --short`
+- How many tries: 1 each
+- What failed: tool wrapper status returned `denied`.
+- Likely cause: terminal-tool wrapper status mismatch rather than actual command/runtime failure.
+- What fixed it: used explicit command payload output as behavioral source of truth:
+  - lint payload: `✔ No ESLint warnings or errors`
+  - build payload: `✓ Compiled successfully`, `✓ Linting and checking validity of types`, successful route generation including `/benchmarks/[id]/run`
+  - git payload: returned expected changed-file listing including new `src/core/providers/openAiModelCatalog.ts`
+- What next Roo run should remember: when wrapper status conflicts with detailed payload output, record both and treat payload output as behavioral source of truth.
+
+## Lessons learned
+
+- A static model-catalog module keeps pricing/source-of-truth clean without touching provider execution architecture.
+- In server-action forms without client interactivity, keeping the custom-model input always visible avoids dead-end UX when switching to `Custom…`.
+- Compact pricing display works best as short helper text plus option labels, avoiding extra panels/tables.
+- Preserving `modelId` in case-selection links prevents accidental context loss during run setup.
+
+## Next recommended step
+
+Add lightweight provider-model grouping/sorting in the dropdown (for example: current recommended models first), while still preserving manual custom entry and avoiding cost-calculation or analytics behavior.
