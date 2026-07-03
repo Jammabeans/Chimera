@@ -11,6 +11,10 @@
 # local benchmark cache/state
 /benchmarks-cache
 
+# local run history artifacts
+/data/manual-run-history.json
+/data/model-run-history.json
+
 # misc
 .DS_Store
 *.pem
@@ -35,5 +39,5 @@ pnpm-debug.log*
 
 
 # local handoff notes
-/docs/roo-handoff.md
+/docs/local-notes/
 
