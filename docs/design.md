@@ -145,7 +145,7 @@ Notes for this version:
 
 ### Provider/model execution contract (v1)
 
-Chimera Core now uses this contract for the first practical provider execution path (OpenAI-first) while keeping scope narrow.
+Chimera Core now uses this contract for practical provider execution paths (OpenAI + Ollama) while keeping scope narrow.
 
 Minimal execution request shape:
 
@@ -183,17 +183,23 @@ Current provider execution contract artifacts:
 - Type contract: `src/types/providerExecutionContract.ts`
 - Typed example objects: `src/core/providers/providerExecutionContractExample.ts`
 - OpenAI provider utility: `src/core/providers/openaiProvider.ts`
+- Ollama provider utility: `src/core/providers/ollamaProvider.ts`
 - Provider execution runner composition: `src/core/runner/executeProviderBenchmarkCase.ts`
 - Human-readable contract route (all contract surfaces): `/contract`
 
 Notes for this version:
 
 - Contract remains intentionally small and practical for v1.
-- First provider path is OpenAI via server-side REST `fetch`.
-- Required environment variable: `OPENAI_API_KEY`.
+- Supported provider paths are OpenAI and Ollama via server-side REST `fetch`.
+- OpenAI request path: `POST https://api.openai.com/v1/responses`.
+- Ollama request path: `POST <base-url>/api/generate` with non-streaming payload.
+- Required environment variable for OpenAI: `OPENAI_API_KEY`.
+- Ollama uses local/base-url configuration and does not require an API key in this step.
 - Operator runs one benchmark case at a time.
-- Model selection remains simple (`modelId` text input, default `gpt-4o-mini`).
-- No provider comparison UI and no multi-provider abstraction expansion yet.
+- Model selection remains simple and provider-scoped:
+  - OpenAI model dropdown (+ custom model)
+  - Ollama model text input (+ optional base URL)
+- No provider comparison analytics or broad provider architecture refactor in this step.
 
 ### Manual benchmark run flow (v1)
 
@@ -208,7 +214,7 @@ Notes for this version:
   - scoring is exact string equality against case `expectedAnswer`
   - result fields are `correct`, `score`, `expectedAnswer`, `message`
   - after scoring, run result is appended to local file history (best-effort)
-  - run page also supports model execution for selected case via OpenAI
+  - run page also supports model execution for selected case via OpenAI or Ollama
   - provider result fields include output text, exact-text score, and duration
   - provider errors are shown as readable non-crashing messages
 - Runtime JSON loading/validation is implemented in a small server utility:

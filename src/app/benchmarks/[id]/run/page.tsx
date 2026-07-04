@@ -1,6 +1,7 @@
 import { getBenchmarkById } from "@/core/registry/getBenchmarkById";
 import { getBenchmarkDetailState } from "@/core/registry/getBenchmarkDetailState";
 import { getRuntimeBenchmarkJsonFromCache } from "@/core/registry/getRuntimeBenchmarkJsonFromCache";
+import { OLLAMA_PROVIDER_ID } from "@/core/providers/ollamaProvider";
 import { OPENAI_PROVIDER_ID } from "@/core/providers/openaiProvider";
 import { formatOpenAiModelPricing, OPENAI_MODEL_CATALOG } from "@/core/providers/openAiModelCatalog";
 import { executeProviderBenchmarkCase } from "@/core/runner/executeProviderBenchmarkCase";
@@ -11,7 +12,12 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 const DEFAULT_OPENAI_MODEL_ID = "gpt-4o-mini" as const;
+const DEFAULT_OLLAMA_MODEL_ID = "llama3.1:8b" as const;
 const CUSTOM_OPENAI_MODEL_OPTION = "__custom__" as const;
+const MODEL_RUN_SECTION_ID = "model-run" as const;
+const SUPPORTED_PROVIDER_IDS = [OPENAI_PROVIDER_ID, OLLAMA_PROVIDER_ID] as const;
+
+type SupportedProviderId = (typeof SUPPORTED_PROVIDER_IDS)[number];
 
 interface BenchmarkRunPageProps {
   params: {
@@ -19,7 +25,9 @@ interface BenchmarkRunPageProps {
   };
   searchParams?: {
     caseId?: string | string[];
+    providerId?: string | string[];
     modelId?: string | string[];
+    ollamaBaseUrl?: string | string[];
     answerText?: string | string[];
     submitStatus?: string | string[];
     resultCorrect?: string | string[];
@@ -46,6 +54,12 @@ function toFormStringValue(value: FormDataEntryValue | null): string {
   return typeof value === "string" ? value : "";
 }
 
+function toSupportedProviderId(value: string): SupportedProviderId {
+  return SUPPORTED_PROVIDER_IDS.includes(value as SupportedProviderId)
+    ? (value as SupportedProviderId)
+    : OPENAI_PROVIDER_ID;
+}
+
 export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunPageProps) {
   async function submitAnswerAction(formData: FormData): Promise<void> {
     "use server";
@@ -68,7 +82,7 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
       responseParams.set("resultExpectedAnswer", "");
       responseParams.set("resultMessage", "Runtime benchmark JSON is missing or invalid.");
       responseParams.set("answerText", answerText);
-      redirect(`/benchmarks/${benchmarkId}/run?${responseParams.toString()}`);
+      redirect(`/benchmarks/${benchmarkId}/run?${responseParams.toString()}#${MODEL_RUN_SECTION_ID}`);
     }
 
     const result = scoreRuntimeBenchmarkCase(runtimeState.artifact, caseId, answerText);
@@ -98,27 +112,39 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
       responseParams.set("historyWarning", historyAppendResult.warning);
     }
 
-    redirect(`/benchmarks/${benchmarkId}/run?${responseParams.toString()}`);
+    redirect(`/benchmarks/${benchmarkId}/run?${responseParams.toString()}#${MODEL_RUN_SECTION_ID}`);
   }
 
-  async function runWithOpenAiAction(formData: FormData): Promise<void> {
+  async function runWithProviderAction(formData: FormData): Promise<void> {
     "use server";
 
     const benchmarkId = toFormStringValue(formData.get("benchmarkId"));
     const caseId = toFormStringValue(formData.get("caseId"));
+    const providerId = toSupportedProviderId(toFormStringValue(formData.get("providerId")).trim());
     const knownModelId = toFormStringValue(formData.get("knownModelId")).trim();
     const customModelId = toFormStringValue(formData.get("customModelId")).trim();
-    const legacyModelId = toFormStringValue(formData.get("modelId")).trim();
-    const modelIdInput =
-      knownModelId === CUSTOM_OPENAI_MODEL_OPTION
-        ? customModelId
-        : knownModelId.length > 0
-          ? knownModelId
-          : legacyModelId;
-    const modelId = modelIdInput.length > 0 ? modelIdInput : DEFAULT_OPENAI_MODEL_ID;
+    const modelIdInput = toFormStringValue(formData.get("modelId")).trim();
+    const ollamaBaseUrl = toFormStringValue(formData.get("ollamaBaseUrl")).trim();
+
+    const modelId =
+      providerId === OPENAI_PROVIDER_ID
+        ? knownModelId === CUSTOM_OPENAI_MODEL_OPTION
+          ? customModelId.length > 0
+            ? customModelId
+            : DEFAULT_OPENAI_MODEL_ID
+          : knownModelId.length > 0
+            ? knownModelId
+            : DEFAULT_OPENAI_MODEL_ID
+        : modelIdInput.length > 0
+          ? modelIdInput
+          : DEFAULT_OLLAMA_MODEL_ID;
 
     const responseParams = new URLSearchParams();
+    responseParams.set("providerId", providerId);
     responseParams.set("modelId", modelId);
+    if (providerId === OLLAMA_PROVIDER_ID && ollamaBaseUrl.length > 0) {
+      responseParams.set("ollamaBaseUrl", ollamaBaseUrl);
+    }
 
     if (caseId.trim().length > 0) {
       responseParams.set("caseId", caseId);
@@ -128,14 +154,14 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
     if (!runtimeState.valid || !runtimeState.artifact) {
       responseParams.set("providerSubmitStatus", "error");
       responseParams.set("providerError", "Runtime benchmark JSON is missing or invalid.");
-      redirect(`/benchmarks/${benchmarkId}/run?${responseParams.toString()}`);
+      redirect(`/benchmarks/${benchmarkId}/run?${responseParams.toString()}#${MODEL_RUN_SECTION_ID}`);
     }
 
     const benchmarkCase = runtimeState.artifact.cases.find((item) => item.id === caseId);
     if (!benchmarkCase) {
       responseParams.set("providerSubmitStatus", "error");
-      responseParams.set("providerError", "Select a benchmark case before running with OpenAI.");
-      redirect(`/benchmarks/${benchmarkId}/run?${responseParams.toString()}`);
+      responseParams.set("providerError", "Select a benchmark case before running a model provider.");
+      redirect(`/benchmarks/${benchmarkId}/run?${responseParams.toString()}#${MODEL_RUN_SECTION_ID}`);
     }
 
     const providerResult = await executeProviderBenchmarkCase({
@@ -144,9 +170,10 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
         benchmarkId,
         caseId,
         prompt: benchmarkCase.prompt,
-        providerId: OPENAI_PROVIDER_ID,
+        providerId,
         modelId,
       },
+      ollamaBaseUrl: providerId === OLLAMA_PROVIDER_ID ? ollamaBaseUrl : undefined,
     });
 
     if (!providerResult.ok) {
@@ -157,7 +184,7 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
         responseParams.set("providerDurationMs", String(providerResult.metadata.durationMs));
       }
 
-      redirect(`/benchmarks/${benchmarkId}/run?${responseParams.toString()}`);
+      redirect(`/benchmarks/${benchmarkId}/run?${responseParams.toString()}#${MODEL_RUN_SECTION_ID}`);
     }
 
     responseParams.set("providerSubmitStatus", "scored");
@@ -187,7 +214,7 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
       responseParams.set("modelHistoryWarning", historyAppendResult.warning);
     }
 
-    redirect(`/benchmarks/${benchmarkId}/run?${responseParams.toString()}`);
+    redirect(`/benchmarks/${benchmarkId}/run?${responseParams.toString()}#${MODEL_RUN_SECTION_ID}`);
   }
 
   const benchmark = getBenchmarkById(params.id);
@@ -199,8 +226,15 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
   const runtimeState = getRuntimeBenchmarkJsonFromCache(params.id);
 
   const selectedCaseId = toSingleSearchParam(searchParams?.caseId);
-  const selectedModelId = toSingleSearchParam(searchParams?.modelId) || DEFAULT_OPENAI_MODEL_ID;
-  const selectedCatalogModel = OPENAI_MODEL_CATALOG.find((entry) => entry.modelId === selectedModelId) ?? null;
+  const selectedProviderId = toSupportedProviderId(toSingleSearchParam(searchParams?.providerId));
+  const selectedModelId =
+    toSingleSearchParam(searchParams?.modelId) ||
+    (selectedProviderId === OPENAI_PROVIDER_ID ? DEFAULT_OPENAI_MODEL_ID : DEFAULT_OLLAMA_MODEL_ID);
+  const selectedOllamaBaseUrl = toSingleSearchParam(searchParams?.ollamaBaseUrl);
+  const selectedCatalogModel =
+    selectedProviderId === OPENAI_PROVIDER_ID
+      ? OPENAI_MODEL_CATALOG.find((entry) => entry.modelId === selectedModelId) ?? null
+      : null;
   const modelSelectValue = selectedCatalogModel ? selectedCatalogModel.modelId : CUSTOM_OPENAI_MODEL_OPTION;
   const customModelInputDefault = selectedCatalogModel ? "" : selectedModelId;
   const selectedPricingLabel = selectedCatalogModel
@@ -239,6 +273,9 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
   const selectedCaseLabel = selectedCase
     ? `${selectedCase.title} (level: ${selectedCase.levelId})`
     : "No case selected";
+
+  const selectedProviderLabel =
+    selectedProviderId === OPENAI_PROVIDER_ID ? "OpenAI" : selectedProviderId === OLLAMA_PROVIDER_ID ? "Ollama" : "Unknown";
 
   return (
     <main className="container">
@@ -363,7 +400,7 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
                         <span className="case-selected-badge">Selected</span>
                       ) : (
                         <Link
-                          href={`/benchmarks/${benchmark.id}/run?caseId=${encodeURIComponent(item.id)}&modelId=${encodeURIComponent(selectedModelId)}`}
+                          href={`/benchmarks/${benchmark.id}/run?caseId=${encodeURIComponent(item.id)}&providerId=${encodeURIComponent(selectedProviderId)}&modelId=${encodeURIComponent(selectedModelId)}${selectedOllamaBaseUrl.length > 0 ? `&ollamaBaseUrl=${encodeURIComponent(selectedOllamaBaseUrl)}` : ""}`}
                         >
                           Select case
                         </Link>
@@ -453,30 +490,69 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
                   )}
                 </section>
 
-                <section className="run-panel">
+                <section id={MODEL_RUN_SECTION_ID} className="run-panel">
                   <h2>Model Run</h2>
-                  <form action={runWithOpenAiAction} className="runtime-answer-form">
+                  <p className="subtle">
+                    Selected provider: <strong>{selectedProviderLabel}</strong>
+                  </p>
+                  <p className="subtle">
+                    Switch provider view:
+                    {" "}
+                    <Link
+                      href={`/benchmarks/${benchmark.id}/run?caseId=${encodeURIComponent(selectedCase.id)}&providerId=${encodeURIComponent(OPENAI_PROVIDER_ID)}&modelId=${encodeURIComponent(selectedProviderId === OPENAI_PROVIDER_ID ? selectedModelId : DEFAULT_OPENAI_MODEL_ID)}#${MODEL_RUN_SECTION_ID}`}
+                    >
+                      OpenAI
+                    </Link>
+                    {" "}
+                    ·{" "}
+                    <Link
+                      href={`/benchmarks/${benchmark.id}/run?caseId=${encodeURIComponent(selectedCase.id)}&providerId=${encodeURIComponent(OLLAMA_PROVIDER_ID)}&modelId=${encodeURIComponent(selectedProviderId === OLLAMA_PROVIDER_ID ? selectedModelId : DEFAULT_OLLAMA_MODEL_ID)}${selectedOllamaBaseUrl.length > 0 ? `&ollamaBaseUrl=${encodeURIComponent(selectedOllamaBaseUrl)}` : ""}#${MODEL_RUN_SECTION_ID}`}
+                    >
+                      Ollama
+                    </Link>
+                  </p>
+
+                  <form action={runWithProviderAction} className="runtime-answer-form">
                     <input type="hidden" name="benchmarkId" value={benchmark.id} />
                     <input type="hidden" name="caseId" value={selectedCase.id} />
+                    <input type="hidden" name="providerId" value={selectedProviderId} />
 
-                    <label htmlFor="knownModelId">Model</label>
-                    <select id="knownModelId" name="knownModelId" defaultValue={modelSelectValue}>
-                      {OPENAI_MODEL_CATALOG.map((entry) => (
-                        <option key={entry.modelId} value={entry.modelId}>
-                          {entry.modelId} ({formatOpenAiModelPricing(entry)})
-                        </option>
-                      ))}
-                      <option value={CUSTOM_OPENAI_MODEL_OPTION}>Custom…</option>
-                    </select>
+                    {selectedProviderId === OPENAI_PROVIDER_ID ? (
+                      <>
+                        <label htmlFor="knownModelId">OpenAI model</label>
+                        <select id="knownModelId" name="knownModelId" defaultValue={modelSelectValue}>
+                          {OPENAI_MODEL_CATALOG.map((entry) => (
+                            <option key={entry.modelId} value={entry.modelId}>
+                              {entry.modelId} ({formatOpenAiModelPricing(entry)})
+                            </option>
+                          ))}
+                          <option value={CUSTOM_OPENAI_MODEL_OPTION}>Custom…</option>
+                        </select>
 
-                    <label htmlFor="customModelId">Custom model ID (used when “Custom…” is selected)</label>
-                    <input id="customModelId" name="customModelId" type="text" defaultValue={customModelInputDefault} />
+                        <label htmlFor="customModelId">Custom OpenAI model ID (used when “Custom…” is selected)</label>
+                        <input id="customModelId" name="customModelId" type="text" defaultValue={customModelInputDefault} />
 
-                    <p className="model-pricing-helper subtle">
-                      Pricing (USD per 1M tokens, input / cached input / output): {selectedPricingLabel}
-                    </p>
+                        <p className="model-pricing-helper subtle">
+                          Pricing (USD per 1M tokens, input / cached input / output): {selectedPricingLabel}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <label htmlFor="modelId">Ollama model</label>
+                        <input id="modelId" name="modelId" type="text" defaultValue={selectedModelId} required />
 
-                    <button type="submit">Run with OpenAI</button>
+                        <label htmlFor="ollamaBaseUrl">Ollama base URL (optional)</label>
+                        <input
+                          id="ollamaBaseUrl"
+                          name="ollamaBaseUrl"
+                          type="text"
+                          defaultValue={selectedOllamaBaseUrl}
+                          placeholder="http://127.0.0.1:11434"
+                        />
+                      </>
+                    )}
+
+                    <button type="submit">Run with selected provider</button>
                   </form>
 
                   {providerSubmitStatus === "error" ? (
@@ -496,7 +572,7 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
                         <div>
                           <dt>Provider</dt>
                           <dd>
-                            <code>{OPENAI_PROVIDER_ID}</code>
+                            <code>{selectedProviderId}</code>
                           </dd>
                         </div>
                         <div>
@@ -534,7 +610,7 @@ export default function BenchmarkRunPage({ params, searchParams }: BenchmarkRunP
                       </dl>
                     </div>
                   ) : (
-                    <p className="subtle">Run with OpenAI to view output, score, and expected answer.</p>
+                    <p className="subtle">Run with the selected provider to view output, score, and expected answer.</p>
                   )}
                 </section>
               </div>

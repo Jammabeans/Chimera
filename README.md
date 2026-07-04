@@ -202,29 +202,36 @@ Static JSON scope boundaries in this step:
 - manual run UI only
 - no API routes
 
-## Provider execution (v1: OpenAI first path)
+## Provider execution (v1: OpenAI + Ollama)
 
-Chimera Core now includes the first actual provider execution path using OpenAI.
+Chimera Core now includes provider execution paths for OpenAI and Ollama.
 
 - Provider execution contract types remain in [`src/types/providerExecutionContract.ts`](src/types/providerExecutionContract.ts).
 - OpenAI provider utility lives in [`src/core/providers/openaiProvider.ts`](src/core/providers/openaiProvider.ts).
+- Ollama provider utility lives in [`src/core/providers/ollamaProvider.ts`](src/core/providers/ollamaProvider.ts).
 - Server-side provider execution + scoring composition lives in [`src/core/runner/executeProviderBenchmarkCase.ts`](src/core/runner/executeProviderBenchmarkCase.ts).
 - The benchmark run page at [`/benchmarks/[id]/run`](src/app/benchmarks/[id]/run/page.tsx) now supports:
   - selecting one case
+  - selecting provider (`openai` or `ollama`)
   - selecting a known OpenAI model from a compact dropdown (with pricing labels)
-  - choosing `Custom…` to manually enter any model id
-  - `Run with OpenAI`
+  - choosing `Custom…` to manually enter any OpenAI model id
+  - entering an Ollama model id
+  - entering an optional Ollama base URL (defaults to `http://127.0.0.1:11434`)
+  - `Run with <provider>`
   - rendering provider output text
   - exact-text scoring against `expectedAnswer`
   - readable provider error messages
 
 Provider behavior in this step:
 
-- first provider only: `openai`
+- supported providers: `openai`, `ollama`
 - one benchmark case at a time
-- non-streaming request via server-side `fetch` to OpenAI REST API
+- non-streaming request via server-side `fetch`
+  - OpenAI: `POST https://api.openai.com/v1/responses` (`model`, `input`)
+  - Ollama: `POST <base-url>/api/generate` (`model`, `prompt`, `stream: false`)
 - plain-text output extraction
-- minimal safe error handling for missing API key and provider/API failures
+- minimal safe error handling for provider/API failures
+- OpenAI still requires API key env var; Ollama does not
 
 ## Manual run flow (v1)
 
@@ -336,10 +343,18 @@ npm install
 npm run dev
 ```
 
-Required environment variable for provider execution:
+Environment variables for provider execution:
 
 ```bash
 OPENAI_API_KEY=your_openai_api_key
+```
+
+Ollama local default (no env var required):
+
+```bash
+# optional if your Ollama server is not at default
+# provide in run form as "Ollama base URL"
+http://127.0.0.1:11434
 ```
 
 Then open http://localhost:3000.

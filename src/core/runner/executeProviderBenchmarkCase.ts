@@ -1,4 +1,5 @@
 import { OPENAI_PROVIDER_ID, runOpenAiProviderExecution } from "@/core/providers/openaiProvider";
+import { OLLAMA_PROVIDER_ID, runOllamaProviderExecution } from "@/core/providers/ollamaProvider";
 import type {
   ProviderExecutionMetadata,
   ProviderExecutionRequest,
@@ -26,8 +27,9 @@ export type ExecuteProviderBenchmarkCaseResult =
 export async function executeProviderBenchmarkCase(params: {
   artifact: RuntimeBenchmarkJsonArtifact;
   request: ProviderExecutionRequest;
+  ollamaBaseUrl?: string;
 }): Promise<ExecuteProviderBenchmarkCaseResult> {
-  const { artifact, request } = params;
+  const { artifact, request, ollamaBaseUrl } = params;
 
   const benchmarkCase = artifact.cases.find((item) => item.id === request.caseId);
   if (!benchmarkCase) {
@@ -46,7 +48,7 @@ export async function executeProviderBenchmarkCase(params: {
     };
   }
 
-  if (request.providerId !== OPENAI_PROVIDER_ID) {
+  if (request.providerId !== OPENAI_PROVIDER_ID && request.providerId !== OLLAMA_PROVIDER_ID) {
     return {
       ok: false,
       errorMessage: `Unsupported provider id: ${request.providerId}.`,
@@ -54,7 +56,10 @@ export async function executeProviderBenchmarkCase(params: {
     };
   }
 
-  const executionResult = await runOpenAiProviderExecution(request);
+  const executionResult =
+    request.providerId === OPENAI_PROVIDER_ID
+      ? await runOpenAiProviderExecution(request)
+      : await runOllamaProviderExecution(request, ollamaBaseUrl);
 
   if (!executionResult.ok) {
     return {
