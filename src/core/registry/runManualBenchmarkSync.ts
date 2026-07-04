@@ -3,11 +3,13 @@ import { existsSync, mkdirSync } from "node:fs";
 import { isAbsolute, relative, resolve } from "node:path";
 
 import { getBenchmarkById } from "./getBenchmarkById";
+import { getCacheInspection } from "./getCacheInspection";
+import { getRuntimeBenchmarkJsonFromCache } from "./getRuntimeBenchmarkJsonFromCache";
 
 const CACHE_BASE_DIR = "benchmarks-cache";
 const ROOT_MANIFEST_FILENAME = "benchmark.manifest.json";
 
-export type ManualSyncResultStatus = "cloned" | "already-exists" | "rejected" | "failed";
+export type ManualSyncResultStatus = "cloned" | "updated" | "rejected" | "failed";
 
 export interface ManualSyncResult {
   benchmarkId: string;
@@ -45,6 +47,40 @@ function readCloneError(stdout: string | null, stderr: string | null, processErr
   }
 
   return "git clone failed with no output.";
+}
+
+function readGitCommandError(params: {
+  command: string;
+  stdout: string | null;
+  stderr: string | null;
+  processError?: Error;
+}): string {
+  const { command, stdout, stderr, processError } = params;
+
+  if (processError) {
+    return `${command}: ${processError.message}`;
+  }
+
+  const stderrMessage = stderr?.trim();
+  if (stderrMessage && stderrMessage.length > 0) {
+    return `${command}: ${stderrMessage}`;
+  }
+
+  const stdoutMessage = stdout?.trim();
+  if (stdoutMessage && stdoutMessage.length > 0) {
+    return `${command}: ${stdoutMessage}`;
+  }
+
+  return `${command} failed with no output.`;
+}
+
+function getPostSyncStateSummary(benchmarkId: string): string {
+  const cacheState = getCacheInspection().find((item) => item.benchmarkId === benchmarkId);
+  const runtimeState = getRuntimeBenchmarkJsonFromCache(benchmarkId);
+
+  const cacheStatus = cacheState?.status ?? "cache-missing";
+
+  return `Cache status after sync: ${cacheStatus}. Runtime artifact status: ${runtimeState.status}.`;
 }
 
 export function runManualBenchmarkSync(benchmarkId: string): ManualSyncResult {
@@ -96,10 +132,74 @@ export function runManualBenchmarkSync(benchmarkId: string): ManualSyncResult {
   }
 
   if (existsSync(targetAbsolutePath)) {
+    const gitRepoCheck = spawnSync("git", ["-C", targetAbsolutePath, "rev-parse", "--is-inside-work-tree"], {
+      encoding: "utf8",
+    });
+
+    if (gitRepoCheck.status !== 0 || gitRepoCheck.stdout?.trim() !== "true") {
+      return {
+        benchmarkId: normalizedId,
+        status: "failed",
+        message:
+          "Sync failed: cache directory exists but is not a valid git working tree. Remove it and retry sync to clone fresh.",
+      };
+    }
+
+    const fetchResult = spawnSync("git", ["-C", targetAbsolutePath, "fetch", "origin", entry.defaultRef, "--depth", "1"], {
+      encoding: "utf8",
+    });
+
+    if (fetchResult.status !== 0) {
+      return {
+        benchmarkId: normalizedId,
+        status: "failed",
+        message: `Update failed: ${readGitCommandError({
+          command: `git fetch origin ${entry.defaultRef}`,
+          stdout: fetchResult.stdout,
+          stderr: fetchResult.stderr,
+          processError: fetchResult.error,
+        })}`,
+      };
+    }
+
+    const resetResult = spawnSync("git", ["-C", targetAbsolutePath, "reset", "--hard", "FETCH_HEAD"], {
+      encoding: "utf8",
+    });
+
+    if (resetResult.status !== 0) {
+      return {
+        benchmarkId: normalizedId,
+        status: "failed",
+        message: `Update failed: ${readGitCommandError({
+          command: "git reset --hard FETCH_HEAD",
+          stdout: resetResult.stdout,
+          stderr: resetResult.stderr,
+          processError: resetResult.error,
+        })}`,
+      };
+    }
+
+    const cleanResult = spawnSync("git", ["-C", targetAbsolutePath, "clean", "-fd"], {
+      encoding: "utf8",
+    });
+
+    if (cleanResult.status !== 0) {
+      return {
+        benchmarkId: normalizedId,
+        status: "failed",
+        message: `Update failed: ${readGitCommandError({
+          command: "git clean -fd",
+          stdout: cleanResult.stdout,
+          stderr: cleanResult.stderr,
+          processError: cleanResult.error,
+        })}`,
+      };
+    }
+
     return {
       benchmarkId: normalizedId,
-      status: "already-exists",
-      message: "Skipped: cache directory already exists; fetch/pull is not implemented in v1.",
+      status: "updated",
+      message: `Updated existing cache via fetch + hard reset to origin/${entry.defaultRef} (plus clean of untracked files). ${getPostSyncStateSummary(entry.id)}`,
     };
   }
 
@@ -124,7 +224,7 @@ export function runManualBenchmarkSync(benchmarkId: string): ManualSyncResult {
   return {
     benchmarkId: normalizedId,
     status: "cloned",
-    message: `Cloned approved repo into benchmarks-cache/${entry.id}/. Root manifest expected at benchmarks-cache/${entry.id}/${ROOT_MANIFEST_FILENAME}.`,
+    message: `Cloned approved repo into benchmarks-cache/${entry.id}/. Root manifest expected at benchmarks-cache/${entry.id}/${ROOT_MANIFEST_FILENAME}. ${getPostSyncStateSummary(entry.id)}`,
   };
 }
 

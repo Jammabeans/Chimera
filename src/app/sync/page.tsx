@@ -30,25 +30,24 @@ export default function SyncPage({ searchParams }: SyncPageProps) {
   const syncMessage = searchParams?.syncMessage?.trim() ?? "";
   const syncedId = searchParams?.syncedId?.trim() ?? "";
   const syncStatus = searchParams?.syncStatus?.trim() ?? "";
+  const isSuccessStatus = syncStatus === "cloned" || syncStatus === "updated";
 
   return (
     <main className="container">
       <h1>Sync Planning</h1>
       <p className="subtle">
-        This page supports manual sync of one benchmark at a time using approved registry entries. v1 only clones missing
-        repositories and does not fetch/pull existing cache directories.
+        This page supports manual sync of one benchmark at a time using approved registry entries. Missing caches are cloned.
+        Existing caches are treated as disposable and updated via fetch + hard reset.
       </p>
 
       {syncMessage.length > 0 ? (
         <p
           className={`sync-result-message ${
-            syncStatus === "cloned"
+            isSuccessStatus
               ? "sync-result-success"
-              : syncStatus === "already-exists"
-                ? "sync-result-info"
-                : syncStatus === "rejected"
-                  ? "sync-result-warning"
-                  : "sync-result-error"
+              : syncStatus === "rejected"
+                ? "sync-result-warning"
+                : "sync-result-error"
           }`}
           role="status"
         >

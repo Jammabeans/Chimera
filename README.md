@@ -63,8 +63,11 @@ Chimera Core now includes a sync view at `/sync` that shows planned benchmark-to
   - trust mode must be `allowlisted`
   - resolved path must remain inside the `benchmarks-cache` base directory
 - v1 sync behavior is intentionally narrow:
-  - clone only when the target cache directory is missing
-  - if cache directory already exists, return `already-exists` and do not fetch/pull
+  - clone when the target cache directory is missing
+  - if cache directory already exists, treat it as disposable cache state and update it
+  - update path uses `git fetch origin <defaultRef> --depth 1` + `git reset --hard FETCH_HEAD` + `git clean -fd`
+  - no merge preservation and no local cache edit preservation
+  - sync result re-checks cache/manifest/runtime state after clone/update and includes a short status summary
   - no bulk sync, package install, dynamic import, benchmark execution, model API, or database behavior
 
 ## Cache inspection page (v1)
