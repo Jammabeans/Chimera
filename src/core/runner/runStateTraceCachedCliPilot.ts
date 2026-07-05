@@ -7,7 +7,7 @@ const STATE_TRACE_CONTRACT_VERSION = "1" as const;
 const STATE_TRACE_CACHE_REPO_PATH = "benchmarks-cache/state-trace" as const;
 const STATE_TRACE_CLI_ENTRYPOINT = "dist/chimera-cli.js" as const;
 
-export type StateTraceCliCommand = "generate" | "score";
+export type StateTraceCliCommand = "generate" | "score" | "analyze";
 
 export type StateTraceCliErrorCode =
   | "cache-repo-missing"
@@ -48,6 +48,8 @@ export interface StateTraceCliScoreInput {
   response: string;
 }
 
+export type StateTraceCliAnalyzeInput = StateTraceCliScoreInput;
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -69,6 +71,7 @@ function toReadableProcessMessage(stdout: string, stderr: string): string {
 function runStateTraceCachedCliCommand<TData>(command: StateTraceCliCommand, payload: unknown): StateTraceCliResult<TData> {
   const cacheRepoAbsolutePath = resolve(process.cwd(), STATE_TRACE_CACHE_REPO_PATH);
   const cliEntrypointAbsolutePath = resolve(cacheRepoAbsolutePath, STATE_TRACE_CLI_ENTRYPOINT);
+  const invokedCommand = `node ${STATE_TRACE_CLI_ENTRYPOINT} ${command}`;
 
   if (!existsSync(cacheRepoAbsolutePath)) {
     return {
@@ -127,7 +130,7 @@ function runStateTraceCachedCliCommand<TData>(command: StateTraceCliCommand, pay
       benchmarkId: STATE_TRACE_BENCHMARK_ID,
       command,
       errorCode: "process-exit-nonzero",
-      message: `Benchmark CLI exited with non-zero status (${commandResult.status}) for command \"${command}\": ${toReadableProcessMessage(
+      message: `Benchmark CLI exited with non-zero status (${commandResult.status}) for command \"${command}\". Invoked: ${invokedCommand}. Output: ${toReadableProcessMessage(
         stdout,
         stderr,
       )}. stdin payload: ${inputJson}`,
@@ -189,6 +192,17 @@ export function runStateTraceCliGenerate(input: StateTraceCliGenerateInput): Sta
 
 export function runStateTraceCliScore(input: StateTraceCliScoreInput): StateTraceCliResult {
   return runStateTraceCachedCliCommand("score", {
+    benchmarkId: STATE_TRACE_BENCHMARK_ID,
+    contractVersion: STATE_TRACE_CONTRACT_VERSION,
+    instance: input.instance,
+    response: {
+      text: input.response,
+    },
+  });
+}
+
+export function runStateTraceCliAnalyze(input: StateTraceCliAnalyzeInput): StateTraceCliResult {
+  return runStateTraceCachedCliCommand("analyze", {
     benchmarkId: STATE_TRACE_BENCHMARK_ID,
     contractVersion: STATE_TRACE_CONTRACT_VERSION,
     instance: input.instance,

@@ -25,6 +25,9 @@ const INITIAL_SCORE_STATE: ScoreCliPilotState = {
   status: "idle",
   error: "",
   scoreResultJson: "",
+  analysisStatus: "idle",
+  analysisResultJson: "",
+  analysisError: "",
 };
 
 export function CliPilotClient() {
@@ -98,6 +101,19 @@ export function CliPilotClient() {
           <div className="run-result-block">
             <h3>Score result JSON</h3>
             <pre className="contract-code-block">{scoreState.scoreResultJson}</pre>
+
+            {scoreState.analysisStatus === "ok" && scoreState.analysisResultJson.trim().length > 0 ? (
+              <>
+                <h3>Analysis result JSON</h3>
+                <pre className="contract-code-block">{scoreState.analysisResultJson}</pre>
+              </>
+            ) : null}
+
+            {scoreState.analysisStatus === "error" ? (
+              <p className="history-warning" role="status">
+                Analyze failed after score succeeded: {scoreState.analysisError || "Unknown analyze failure."}
+              </p>
+            ) : null}
           </div>
         ) : null}
       </section>

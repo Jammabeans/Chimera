@@ -2,6 +2,7 @@
 
 import {
   extractPromptFromStateTraceGeneratedInstance,
+  runStateTraceCliAnalyze,
   runStateTraceCliGenerate,
   runStateTraceCliScore,
 } from "@/core/runner/runStateTraceCachedCliPilot";
@@ -20,6 +21,9 @@ export interface ScoreCliPilotState {
   status: "idle" | "ok" | "error";
   error: string;
   scoreResultJson: string;
+  analysisStatus: "idle" | "ok" | "error";
+  analysisResultJson: string;
+  analysisError: string;
 }
 
 function toFormStringValue(value: FormDataEntryValue | null): string {
@@ -101,6 +105,9 @@ export async function scoreStateTraceResponseAction(
       status: "error",
       error: "No generated instance is present. Generate an instance first.",
       scoreResultJson: "",
+      analysisStatus: "idle",
+      analysisResultJson: "",
+      analysisError: "",
     };
   }
 
@@ -113,6 +120,9 @@ export async function scoreStateTraceResponseAction(
       status: "error",
       error: "Generated instance JSON is invalid. Generate a fresh instance and retry.",
       scoreResultJson: "",
+      analysisStatus: "idle",
+      analysisResultJson: "",
+      analysisError: "",
     };
   }
 
@@ -127,6 +137,26 @@ export async function scoreStateTraceResponseAction(
       status: "error",
       error: scoreResult.message,
       scoreResultJson: "",
+      analysisStatus: "idle",
+      analysisResultJson: "",
+      analysisError: "",
+    };
+  }
+
+  const analyzeResult = runStateTraceCliAnalyze({
+    instance: parsedInstance,
+    response: responseText,
+  });
+
+  if (!analyzeResult.ok) {
+    return {
+      responseText,
+      status: "ok",
+      error: "",
+      scoreResultJson: JSON.stringify(scoreResult.data),
+      analysisStatus: "error",
+      analysisResultJson: "",
+      analysisError: analyzeResult.message,
     };
   }
 
@@ -135,6 +165,9 @@ export async function scoreStateTraceResponseAction(
     status: "ok",
     error: "",
     scoreResultJson: JSON.stringify(scoreResult.data),
+    analysisStatus: "ok",
+    analysisResultJson: JSON.stringify(analyzeResult.data),
+    analysisError: "",
   };
 }
 
