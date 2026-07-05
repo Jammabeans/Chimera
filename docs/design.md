@@ -254,6 +254,25 @@ Out-of-scope in this version:
 
 ## Scoring/results UI (later)
 
+### Benchmark CLI contract (v1, minimal)
+
+Chimera Core now also documents a minimal shared benchmark CLI contract for benchmark repos that expose command-based local execution.
+
+- Contract doc: `docs/benchmark-cli-contract.md`
+- Transport pattern:
+  - command arg (`generate` | `score` | `analyze`)
+  - JSON request on `stdin`
+  - JSON response on `stdout`
+  - logs/errors on `stderr`
+- Common request envelope fields:
+  - `benchmarkId`
+  - `contractVersion`
+- Intentional scope boundaries in v1:
+  - define practical request/response shape only
+  - do not standardize benchmark-specific `instance` internals
+  - do not overdefine analysis/report taxonomy
+  - no provider/model CLI behavior specified
+
 Scoring details and richer result analysis views beyond current manual-run and file-history pages will be added in later iterations.
 
 ## Benchmark detail route (current)

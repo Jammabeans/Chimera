@@ -173,6 +173,17 @@ Runtime scope boundaries in this step:
 - no execution UI yet
 - no model API calls
 
+## Benchmark CLI contract (v1, minimal)
+
+Chimera Core now documents a small shared CLI request/response contract for benchmark repos that expose benchmark-local CLI commands.
+
+- Contract doc: [`docs/benchmark-cli-contract.md`](docs/benchmark-cli-contract.md)
+- Transport is JSON over `stdin`/`stdout` with `stderr` for logs/errors.
+- Current command set is intentionally minimal: `generate`, `score`, `analyze`.
+- Common request envelope fields include `benchmarkId` and `contractVersion`.
+- `state-trace` CLI pilot is the current reference implementation shape.
+- Benchmark-specific internals (for example full `instance` schema and analysis taxonomy) remain intentionally undefined in v1.
+
 ## Static runtime benchmark JSON contract (v1)
 
 Chimera Core now defines a separate static JSON contract for deterministic runtime artifacts stored at benchmark repo root as [`runtime-benchmark.json`](runtime-benchmark.json).
