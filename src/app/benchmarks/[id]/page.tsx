@@ -103,6 +103,12 @@ export default function BenchmarkDetailPage({ params }: BenchmarkDetailPageProps
             <Link href={`/benchmarks/${benchmark.id}/run`}>Open manual run page</Link>
           </dd>
         </div>
+        <div>
+          <dt>Generic CLI Route</dt>
+          <dd>
+            <Link href={`/benchmarks/${benchmark.id}/cli`}>Open generic CLI route</Link>
+          </dd>
+        </div>
         {benchmark.id === "state-trace" ? (
           <div>
             <dt>State-trace CLI Pilot</dt>

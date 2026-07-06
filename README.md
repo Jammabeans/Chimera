@@ -179,8 +179,9 @@ Chimera Core now documents a small shared CLI request/response contract for benc
 
 - Contract doc: [`docs/benchmark-cli-contract.md`](docs/benchmark-cli-contract.md)
 - Transport is JSON over `stdin`/`stdout` with `stderr` for logs/errors.
-- Current command set is intentionally minimal: `generate`, `score`, `analyze`.
+- Current command set is intentionally minimal: `describe`, `generate`, `score`, `analyze`.
 - Common request envelope fields include `benchmarkId` and `contractVersion`.
+- `describe` provides a small benchmark-owned contract surface, including `generate.fields` for practical input discovery.
 - `state-trace` CLI pilot is the current reference implementation shape.
 - Benchmark-specific internals (for example full `instance` schema and analysis taxonomy) remain intentionally undefined in v1.
 
