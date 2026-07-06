@@ -260,13 +260,16 @@ Chimera Core now also documents a minimal shared benchmark CLI contract for benc
 
 - Contract doc: `docs/benchmark-cli-contract.md`
 - Transport pattern:
-  - command arg (`generate` | `score` | `analyze`)
+  - command arg (`describe` | `generate` | `score` | `analyze`)
   - JSON request on `stdin`
   - JSON response on `stdout`
   - logs/errors on `stderr`
 - Common request envelope fields:
   - `benchmarkId`
   - `contractVersion`
+- `describe` canonical shape highlights:
+  - `commands` is `string[]`
+  - benchmark input metadata is exposed at `describe.generate.fields`
 - Intentional scope boundaries in v1:
   - define practical request/response shape only
   - do not standardize benchmark-specific `instance` internals

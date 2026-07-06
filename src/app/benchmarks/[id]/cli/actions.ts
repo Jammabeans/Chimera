@@ -42,11 +42,6 @@ function extractPromptFromGeneratePayload(payload: unknown): string {
   }
 
   const record = payload as Record<string, unknown>;
-  const directPrompt = record.prompt;
-  if (typeof directPrompt === "string" && directPrompt.trim().length > 0) {
-    return directPrompt;
-  }
-
   const instance = record.instance;
   if (typeof instance !== "object" || instance === null) {
     return "";
@@ -91,8 +86,9 @@ function parseIntegerValue(rawValue: string): number | null {
 function buildGeneratePayloadFromFields(params: {
   formData: FormData;
   fields: BenchmarkCliDescribeField[];
-}): { ok: true; payload: Record<string, unknown> } | { ok: false; message: string } {
-  const payload: Record<string, unknown> = {};
+}): { ok: true; payload: { seed: string; params: Record<string, unknown> } } | { ok: false; message: string } {
+  let seed = "";
+  const generateParams: Record<string, unknown> = {};
 
   for (const field of params.fields) {
     const formName = toFieldFormName(field.name);
@@ -109,9 +105,17 @@ function buildGeneratePayloadFromFields(params: {
       }
 
       if (!checked && field.defaultValue !== undefined) {
-        payload[field.name] = Boolean(field.defaultValue);
+        if (field.name === "seed") {
+          seed = String(field.defaultValue);
+        } else {
+          generateParams[field.name] = Boolean(field.defaultValue);
+        }
       } else {
-        payload[field.name] = checked;
+        if (field.name === "seed") {
+          seed = String(checked);
+        } else {
+          generateParams[field.name] = checked;
+        }
       }
 
       continue;
@@ -120,7 +124,11 @@ function buildGeneratePayloadFromFields(params: {
     const trimmedValue = rawValue.trim();
     if (trimmedValue.length === 0) {
       if (field.defaultValue !== undefined) {
-        payload[field.name] = field.defaultValue;
+        if (field.name === "seed") {
+          seed = String(field.defaultValue);
+        } else {
+          generateParams[field.name] = field.defaultValue;
+        }
         continue;
       }
 
@@ -135,7 +143,11 @@ function buildGeneratePayloadFromFields(params: {
     }
 
     if (field.type === "string") {
-      payload[field.name] = trimmedValue;
+      if (field.name === "seed") {
+        seed = trimmedValue;
+      } else {
+        generateParams[field.name] = trimmedValue;
+      }
       continue;
     }
 
@@ -162,7 +174,11 @@ function buildGeneratePayloadFromFields(params: {
         };
       }
 
-      payload[field.name] = parsedInteger;
+      if (field.name === "seed") {
+        seed = String(parsedInteger);
+      } else {
+        generateParams[field.name] = parsedInteger;
+      }
       continue;
     }
 
@@ -174,14 +190,21 @@ function buildGeneratePayloadFromFields(params: {
         };
       }
 
-      payload[field.name] = trimmedValue;
+      if (field.name === "seed") {
+        seed = trimmedValue;
+      } else {
+        generateParams[field.name] = trimmedValue;
+      }
       continue;
     }
   }
 
   return {
     ok: true,
-    payload,
+    payload: {
+      seed,
+      params: generateParams,
+    },
   };
 }
 

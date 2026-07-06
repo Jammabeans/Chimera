@@ -87,7 +87,7 @@ interface BenchmarkCliDescribeRoot {
   displayName: string;
   description: string;
   contractVersion: string;
-  commandsRecord: Record<string, unknown> | null;
+  commands: string[];
   generateRecord: Record<string, unknown> | null;
 }
 
@@ -306,67 +306,29 @@ export function runBenchmarkCliCommand<TData>(
   };
 }
 
-function normalizeCommandFlag(value: unknown): boolean {
-  if (typeof value === "boolean") {
-    return value;
-  }
-
-  if (isRecord(value)) {
-    return true;
-  }
-
-  return false;
-}
-
 function parseDescribeRoot(rawDescribe: unknown): BenchmarkCliDescribeRoot {
   const root = isRecord(rawDescribe) ? rawDescribe : {};
-  const commandsRecord = isRecord(root.commands) ? root.commands : null;
-
-  const commandScopedGenerate = commandsRecord && isRecord(commandsRecord.generate) ? commandsRecord.generate : null;
+  const commands = Array.isArray(root.commands)
+    ? root.commands.filter((item): item is string => typeof item === "string")
+    : [];
   const topLevelGenerate = isRecord(root.generate) ? root.generate : null;
 
   return {
     displayName: typeof root.displayName === "string" ? root.displayName : "",
     description: typeof root.description === "string" ? root.description : "",
     contractVersion: typeof root.contractVersion === "string" ? root.contractVersion : BENCHMARK_CLI_CONTRACT_VERSION,
-    commandsRecord,
-    generateRecord: commandScopedGenerate ?? topLevelGenerate,
+    commands,
+    generateRecord: topLevelGenerate,
   };
 }
 
-function extractSupportedCommandSet(rawDescribe: unknown): Set<BenchmarkCliCommand> {
+function extractSupportedCommandSet(commands: string[]): Set<BenchmarkCliCommand> {
   const supported = new Set<BenchmarkCliCommand>();
-  supported.add("describe");
-
-  if (!isRecord(rawDescribe)) {
-    return supported;
-  }
 
   const knownCommands: BenchmarkCliCommand[] = ["describe", "generate", "score", "analyze"];
-  const commandsValue = rawDescribe.commands;
-
-  if (Array.isArray(commandsValue)) {
-    for (const item of commandsValue) {
-      if (typeof item === "string" && knownCommands.includes(item as BenchmarkCliCommand)) {
-        supported.add(item as BenchmarkCliCommand);
-      }
-    }
-  }
-
-  if (isRecord(commandsValue)) {
-    for (const command of knownCommands) {
-      if (normalizeCommandFlag(commandsValue[command])) {
-        supported.add(command);
-      }
-    }
-  }
-
-  const supportedCommandsValue = rawDescribe.supportedCommands;
-  if (Array.isArray(supportedCommandsValue)) {
-    for (const item of supportedCommandsValue) {
-      if (typeof item === "string" && knownCommands.includes(item as BenchmarkCliCommand)) {
-        supported.add(item as BenchmarkCliCommand);
-      }
+  for (const commandName of commands) {
+    if (knownCommands.includes(commandName as BenchmarkCliCommand)) {
+      supported.add(commandName as BenchmarkCliCommand);
     }
   }
 
@@ -431,9 +393,8 @@ function normalizeDescribeGenerateField(field: unknown): BenchmarkCliDescribeFie
 
 export function parseBenchmarkCliDescribeMetadata(benchmarkId: string, rawDescribe: unknown): BenchmarkCliDescribeMetadata {
   const resolvedBenchmarkId = benchmarkId.trim();
-  const supportedCommands = extractSupportedCommandSet(rawDescribe);
-
   const describeRoot = parseDescribeRoot(rawDescribe);
+  const supportedCommands = extractSupportedCommandSet(describeRoot.commands);
   const generateRecord = describeRoot.generateRecord;
   const generateFieldsSource = Array.isArray(generateRecord?.fields) ? generateRecord.fields : [];
 
@@ -460,29 +421,15 @@ export function runBenchmarkCliDescribe(benchmarkId: string): BenchmarkCliResult
 }
 
 export function runBenchmarkCliGenerate(benchmarkId: string, inputPayload: Record<string, unknown>): BenchmarkCliResult {
-  const paramsFromInput = isRecord(inputPayload.params) ? { ...inputPayload.params } : {};
+  const inputSeed = inputPayload.seed;
+  const seed = typeof inputSeed === "string" ? inputSeed : String(inputSeed ?? "");
 
-  for (const [key, value] of Object.entries(inputPayload)) {
-    if (key === "params" || key === "seed") {
-      continue;
-    }
-
-    if (!(key in paramsFromInput)) {
-      paramsFromInput[key] = value;
-    }
-  }
-
-  const normalizedGeneratePayload: Record<string, unknown> = {
-    ...inputPayload,
-  };
-
-  if (Object.keys(paramsFromInput).length > 0) {
-    normalizedGeneratePayload.params = paramsFromInput;
-  }
+  const params = isRecord(inputPayload.params) ? { ...inputPayload.params } : {};
 
   return runBenchmarkCliCommand(benchmarkId, "generate", {
     ...createEnvelope(benchmarkId),
-    ...normalizedGeneratePayload,
+    seed,
+    params,
   });
 }
 
