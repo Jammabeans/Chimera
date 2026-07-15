@@ -91,6 +91,22 @@ export interface StrictJsonFinalStateReportRequirement {
   expectedAvailableInventory: number;
 }
 
+export interface StatefulTaskGenerationFactors {
+  targetSku: string;
+  targetInitialInventory: number;
+  reservationQuantity: number;
+  reservationId: string;
+  irrelevantSkuCount: number;
+  irrelevantInventory: InventoryBySku;
+  instructionTemplate: string;
+}
+
+export interface StatefulTaskGenerationMetadata {
+  source: "manual" | "parametric";
+  generatorVersion: string;
+  factors: StatefulTaskGenerationFactors;
+}
+
 export type TaskGoal =
   | {
       goalType: "successful_reservation";
@@ -121,6 +137,7 @@ export interface StatefulToolTask {
   goal: TaskGoal;
   description: string;
   expectedReservationId: string;
+  generation: StatefulTaskGenerationMetadata;
 }
 
 export type VerificationCode =

@@ -453,6 +453,172 @@ describe("openaiStatefulToolsRunner", () => {
     expect(result.verifierResult.failureCodes).toContain("final_report_inventory_mismatch");
   });
 
+  it("runner result includes parametric task generation metadata for generated seeds", async () => {
+    const task = generateStatefulToolTaskFromSeed(1000);
+    expect(task.generation.source).toBe("parametric");
+
+    const { transport } = createQueueTransport([
+      {
+        output: [
+          {
+            type: "function_call",
+            call_id: "call-1",
+            name: "reserve_item",
+            arguments: JSON.stringify({
+              reservationId: task.expectedReservationId,
+              sku: task.goal.sku,
+              quantity: task.goal.quantity,
+            }),
+          },
+        ],
+      },
+      {
+        output: [
+          {
+            type: "function_call",
+            call_id: "call-2",
+            name: "get_inventory",
+            arguments: JSON.stringify({ sku: task.goal.sku }),
+          },
+        ],
+      },
+      {
+        output: [
+          {
+            type: "function_call",
+            call_id: "call-3",
+            name: "cancel_reservation",
+            arguments: JSON.stringify({ reservationId: task.expectedReservationId }),
+          },
+        ],
+      },
+      {
+        output_text: JSON.stringify({
+          reservation_id: task.expectedReservationId,
+          reservation_status: "cancelled",
+          available_inventory: task.initialInventory[task.goal.sku],
+        }),
+        output: [
+          {
+            type: "message",
+            content: [
+              {
+                type: "output_text",
+                text: JSON.stringify({
+                  reservation_id: task.expectedReservationId,
+                  reservation_status: "cancelled",
+                  available_inventory: task.initialInventory[task.goal.sku],
+                }),
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    const result = await runOpenAiStatefulToolTask(task, { transport });
+
+    expect(result.status).toBe("completed");
+    expect(result.task.taskId).toBe(task.taskId);
+    expect(result.task.seed).toBe(task.seed);
+    expect(result.task.generation).toEqual(task.generation);
+    expect(result.task.generation.source).toBe("parametric");
+    expect(result.task.generation.generatorVersion).toBe("rollback_report_parametric_v1");
+    expect(result.task.generation.factors.targetSku).toBe(task.goal.sku);
+    expect(result.task.generation.factors.irrelevantInventory).toEqual(
+      task.generation.factors.irrelevantInventory,
+    );
+  });
+
+  it("runner result generation metadata is deep-copied and non-aliased", async () => {
+    const seed = 1000;
+    const task = generateStatefulToolTaskFromSeed(seed);
+
+    const createMockTransport = () =>
+      createQueueTransport([
+        {
+          output: [
+            {
+              type: "function_call",
+              call_id: "call-1",
+              name: "reserve_item",
+              arguments: JSON.stringify({
+                reservationId: task.expectedReservationId,
+                sku: task.goal.sku,
+                quantity: task.goal.quantity,
+              }),
+            },
+          ],
+        },
+        {
+          output: [
+            {
+              type: "function_call",
+              call_id: "call-2",
+              name: "get_inventory",
+              arguments: JSON.stringify({ sku: task.goal.sku }),
+            },
+          ],
+        },
+        {
+          output: [
+            {
+              type: "function_call",
+              call_id: "call-3",
+              name: "cancel_reservation",
+              arguments: JSON.stringify({ reservationId: task.expectedReservationId }),
+            },
+          ],
+        },
+        {
+          output_text: JSON.stringify({
+            reservation_id: task.expectedReservationId,
+            reservation_status: "cancelled",
+            available_inventory: task.initialInventory[task.goal.sku],
+          }),
+          output: [
+            {
+              type: "message",
+              content: [
+                {
+                  type: "output_text",
+                  text: JSON.stringify({
+                    reservation_id: task.expectedReservationId,
+                    reservation_status: "cancelled",
+                    available_inventory: task.initialInventory[task.goal.sku],
+                  }),
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+
+    const firstRun = createMockTransport();
+    const firstResult = await runOpenAiStatefulToolTask(task, { transport: firstRun.transport });
+    expect(firstResult.status).toBe("completed");
+
+    firstResult.task.generation.factors.irrelevantInventory.SKU_MUTATED = 999;
+    firstResult.task.generation.factors.irrelevantSkuCount = -123;
+
+    const freshTask = generateStatefulToolTaskFromSeed(seed);
+    expect(freshTask.generation.factors.irrelevantInventory).not.toHaveProperty("SKU_MUTATED");
+    expect(freshTask.generation.factors.irrelevantSkuCount).toBe(
+      Object.keys(freshTask.generation.factors.irrelevantInventory).length,
+    );
+
+    const secondRun = createMockTransport();
+    const secondResult = await runOpenAiStatefulToolTask(freshTask, { transport: secondRun.transport });
+    expect(secondResult.status).toBe("completed");
+    expect(secondResult.task.generation.factors.irrelevantInventory).toEqual(
+      freshTask.generation.factors.irrelevantInventory,
+    );
+    expect(secondResult.task.generation.factors.irrelevantSkuCount).toBe(
+      Object.keys(secondResult.task.generation.factors.irrelevantInventory).length,
+    );
+    expect(secondResult.task.generation.factors.irrelevantInventory).not.toHaveProperty("SKU_MUTATED");
+  });
+
   it("existing runner state-only task remains prose-insensitive under execution-level verifier", async () => {
     const task = generateStatefulToolTaskFromSeed(1);
     expect(task.goal.goalType).toBe("reservation_then_cancellation");

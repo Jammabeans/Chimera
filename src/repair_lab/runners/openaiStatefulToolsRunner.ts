@@ -1,5 +1,6 @@
 import {
   createStatefulToolSimulator,
+  type StatefulTaskGenerationMetadata,
   type StatefulToolTask,
   type VerificationResult,
   verifyStatefulToolTaskExecution,
@@ -101,6 +102,7 @@ export interface OpenAiStatefulToolsRunResult {
   task: {
     taskId: string;
     seed: number;
+    generation: StatefulTaskGenerationMetadata;
   };
   systemPrompt: string;
   taskInstruction: string;
@@ -490,6 +492,10 @@ function createBaseResult(task: StatefulToolTask, maxToolCallRounds: number): Om
   | "verifierResult"
   | "totalLatencyMs"
 > {
+  const taskGeneration = JSON.parse(
+    JSON.stringify(task.generation),
+  ) as StatefulTaskGenerationMetadata;
+
   return {
     baselineConfig: {
       provider: OPENAI_STATEFUL_TOOLS_BASELINE_CONFIG.provider,
@@ -500,6 +506,7 @@ function createBaseResult(task: StatefulToolTask, maxToolCallRounds: number): Om
     task: {
       taskId: task.taskId,
       seed: task.seed,
+      generation: taskGeneration,
     },
     systemPrompt: SYSTEM_PROMPT,
     taskInstruction: toTaskInstruction(task),
