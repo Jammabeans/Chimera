@@ -1,7 +1,13 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { runRepairLabSmokeAction, type RepairLabSmokeActionState } from "./actions";
+import {
+  runRepairLabSmokeAction,
+  runRollbackReportStalenessV1DiscoveryBaselineAction,
+  type RepairLabSmokeActionState,
+  type RollbackReportStalenessV1DiscoveryActionResult,
+} from "./actions";
 
 interface RepairLabSmokeClientProps {
   baseline: {
@@ -18,6 +24,12 @@ const INITIAL_STATE: RepairLabSmokeActionState = {
   message: "",
   runResult: null,
 };
+
+const ROLLBACK_REPORT_STALENESS_V1_DISCOVERY_SUITE_ID = "rollback-report-staleness-v1" as const;
+const ROLLBACK_REPORT_STALENESS_V1_DISCOVERY_CASES = 7;
+const ROLLBACK_REPORT_STALENESS_V1_DISCOVERY_REPETITIONS = 3;
+const ROLLBACK_REPORT_STALENESS_V1_DISCOVERY_TOTAL_EXECUTIONS =
+  ROLLBACK_REPORT_STALENESS_V1_DISCOVERY_CASES * ROLLBACK_REPORT_STALENESS_V1_DISCOVERY_REPETITIONS;
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -40,9 +52,51 @@ function formatMaybeNumber(value: number | null): string {
   return typeof value === "number" ? String(value) : "n/a";
 }
 
+function formatFailureCodes(codes: readonly string[]): string {
+  return codes.length > 0 ? codes.join(", ") : "none";
+}
+
 export function RepairLabSmokeClient({ baseline }: RepairLabSmokeClientProps) {
   const [state, formAction] = useFormState(runRepairLabSmokeAction, INITIAL_STATE);
   const result = state.runResult;
+  const [isDiscoveryPending, setIsDiscoveryPending] = useState(false);
+  const isDiscoveryInFlightRef = useRef(false);
+  const [discoveryActionResult, setDiscoveryActionResult] = useState<RollbackReportStalenessV1DiscoveryActionResult | null>(
+    null,
+  );
+
+  async function handleRunDiscoveryBaseline(): Promise<void> {
+    if (isDiscoveryInFlightRef.current) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "This will launch 21 sequential task executions and each execution may make multiple OpenAI API requests. Continue?",
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    isDiscoveryInFlightRef.current = true;
+    setIsDiscoveryPending(true);
+    setDiscoveryActionResult(null);
+
+    try {
+      const nextResult = await runRollbackReportStalenessV1DiscoveryBaselineAction();
+      setDiscoveryActionResult(nextResult);
+    } catch {
+      setDiscoveryActionResult({
+        status: "error",
+        message:
+          "Unable to complete the discovery baseline request. The connection or server action failed. Check the development server and retry.",
+      });
+    } finally {
+      isDiscoveryInFlightRef.current = false;
+      setIsDiscoveryPending(false);
+    }
+  }
+
+  const discoveryEvaluation = discoveryActionResult?.status === "ok" ? discoveryActionResult.evaluation : null;
 
   return (
     <>
@@ -90,6 +144,170 @@ export function RepairLabSmokeClient({ baseline }: RepairLabSmokeClientProps) {
           <p className="history-warning" role="status">
             {state.message}
           </p>
+        ) : null}
+      </section>
+
+      <section className="run-panel" style={{ marginTop: "1rem" }} aria-labelledby="repair-lab-discovery-baseline">
+        <h2 id="repair-lab-discovery-baseline">Rollback Report Staleness V1 — Discovery Baseline</h2>
+        <p className="history-warning" role="status" style={{ marginTop: 0 }}>
+          This batch is live and may incur API charges. Results are in-memory only and will be lost on refresh or navigation.
+        </p>
+        <dl className="benchmark-detail-list" style={{ marginTop: "0.75rem" }}>
+          <div>
+            <dt>Suite ID</dt>
+            <dd>
+              <code>{ROLLBACK_REPORT_STALENESS_V1_DISCOVERY_SUITE_ID}</code>
+            </dd>
+          </div>
+          <div>
+            <dt>Case coverage</dt>
+            <dd>{ROLLBACK_REPORT_STALENESS_V1_DISCOVERY_CASES} discovery cases only</dd>
+          </div>
+          <div>
+            <dt>Repetitions per case</dt>
+            <dd>{ROLLBACK_REPORT_STALENESS_V1_DISCOVERY_REPETITIONS}</dd>
+          </div>
+          <div>
+            <dt>Total task executions</dt>
+            <dd>{ROLLBACK_REPORT_STALENESS_V1_DISCOVERY_TOTAL_EXECUTIONS} sequential task executions</dd>
+          </div>
+          <div>
+            <dt>API activity</dt>
+            <dd>Each task execution may make multiple OpenAI API requests.</dd>
+          </div>
+          <div>
+            <dt>Excluded coverage</dt>
+            <dd>Held-out and regression cases are not included.</dd>
+          </div>
+          <div>
+            <dt>Persistence</dt>
+            <dd>Results are not persisted and will be lost on refresh/navigation.</dd>
+          </div>
+        </dl>
+
+        <div style={{ marginTop: "1rem" }}>
+          <button
+            type="button"
+            disabled={isDiscoveryPending}
+            aria-disabled={isDiscoveryPending}
+            onClick={() => {
+              void handleRunDiscoveryBaseline();
+            }}
+          >
+            {isDiscoveryPending
+              ? "Running 21 discovery task executions..."
+              : "Run 21 discovery task executions"}
+          </button>
+          {isDiscoveryPending ? (
+            <p className="subtle" role="status" aria-live="polite" style={{ marginTop: "0.5rem" }}>
+              Running 21 sequential task executions. Sequential execution may take time.
+            </p>
+          ) : null}
+        </div>
+
+        {discoveryActionResult?.status === "error" ? (
+          <p className="history-warning" role="status" style={{ marginTop: "0.75rem" }}>
+            {discoveryActionResult.message}
+          </p>
+        ) : null}
+
+        {discoveryEvaluation ? (
+          <div className="run-result-block" style={{ marginTop: "1rem" }}>
+            <h3>Discovery baseline result</h3>
+            <dl className="benchmark-detail-list" style={{ marginTop: "0.75rem" }}>
+              <div>
+                <dt>Suite ID</dt>
+                <dd>
+                  <code>{discoveryEvaluation.suiteId}</code>
+                </dd>
+              </div>
+              <div>
+                <dt>Configured repetitions</dt>
+                <dd>{discoveryEvaluation.repetitions}</dd>
+              </div>
+              <div>
+                <dt>Total execution count</dt>
+                <dd>{discoveryEvaluation.summary.totalExecutions}</dd>
+              </div>
+              <div>
+                <dt>Verifier pass count</dt>
+                <dd>{discoveryEvaluation.summary.verifierPassCount}</dd>
+              </div>
+              <div>
+                <dt>Verifier fail count</dt>
+                <dd>{discoveryEvaluation.summary.verifierFailCount}</dd>
+              </div>
+              <div>
+                <dt>Verifier failure-code counts</dt>
+                <dd>
+                  <pre className="contract-code-block">
+                    {JSON.stringify(discoveryEvaluation.summary.verifierFailureCodeCounts, null, 2)}
+                  </pre>
+                </dd>
+              </div>
+            </dl>
+
+            <h4 style={{ marginTop: "1rem" }}>Executions</h4>
+            <div style={{ overflowX: "auto" }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Case ID</th>
+                    <th>Seed</th>
+                    <th>Stratum</th>
+                    <th>Repetition</th>
+                    <th>Runner status</th>
+                    <th>Termination reason</th>
+                    <th>Verifier</th>
+                    <th>Verifier failure codes</th>
+                    <th>Request count</th>
+                    <th>Tool-call rounds</th>
+                    <th>Total latency (ms)</th>
+                    <th>Input tokens</th>
+                    <th>Output tokens</th>
+                    <th>Total tokens</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {discoveryEvaluation.executions.map((execution, index) => (
+                    <tr key={`${execution.caseId}-${execution.repetition}-${index}`}>
+                      <td>
+                        <code>{execution.caseId}</code>
+                      </td>
+                      <td>{execution.seed}</td>
+                      <td>
+                        <code>{execution.stratum}</code>
+                      </td>
+                      <td>{execution.repetition}</td>
+                      <td>
+                        <code>{execution.runnerResult.status}</code>
+                      </td>
+                      <td>
+                        <code>{execution.runnerResult.terminationReason}</code>
+                      </td>
+                      <td className={execution.runnerResult.verifierResult.passed ? "result-correct" : "result-incorrect"}>
+                        {execution.runnerResult.verifierResult.passed ? "pass" : "fail"}
+                      </td>
+                      <td>
+                        <code>{formatFailureCodes(execution.runnerResult.verifierResult.failureCodes)}</code>
+                      </td>
+                      <td>{execution.runnerResult.requestCount}</td>
+                      <td>{execution.runnerResult.toolCallRounds}</td>
+                      <td>{execution.runnerResult.totalLatencyMs}</td>
+                      <td>{formatMaybeNumber(execution.runnerResult.usage.inputTokens)}</td>
+                      <td>{formatMaybeNumber(execution.runnerResult.usage.outputTokens)}</td>
+                      <td>{formatMaybeNumber(execution.runnerResult.usage.totalTokens)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <details className="run-result-block" style={{ marginTop: "1rem" }}>
+              <summary>Complete evaluation JSON</summary>
+              <pre className="contract-code-block">{JSON.stringify(discoveryEvaluation, null, 2)}</pre>
+            </details>
+          </div>
         ) : null}
       </section>
 
@@ -228,4 +446,3 @@ export function RepairLabSmokeClient({ baseline }: RepairLabSmokeClientProps) {
     </>
   );
 }
-

@@ -2,11 +2,16 @@
 
 import { generateStatefulToolTaskFromSeed } from "@/repair_lab/environments/stateful_tools";
 import {
+  evaluateRollbackReportStalenessV1Discovery,
+  type RollbackReportStalenessV1DiscoveryEvaluationResult,
+} from "@/repair_lab/experiments/evaluateRollbackReportStalenessV1Discovery";
+import {
   runOpenAiStatefulToolTask,
   type OpenAiStatefulToolsRunResult,
 } from "@/repair_lab/runners/openaiStatefulToolsRunner";
 
 const ALLOWED_SEEDS = [0, 1, 2, 3] as const;
+const ROLLBACK_REPORT_STALENESS_V1_DISCOVERY_REPETITIONS = 3 as const;
 
 export interface RepairLabSmokeActionState {
   selectedSeed: number;
@@ -14,6 +19,20 @@ export interface RepairLabSmokeActionState {
   message: string;
   runResult: OpenAiStatefulToolsRunResult | null;
 }
+
+export interface RollbackReportStalenessV1DiscoveryActionSuccess {
+  status: "ok";
+  evaluation: RollbackReportStalenessV1DiscoveryEvaluationResult;
+}
+
+export interface RollbackReportStalenessV1DiscoveryActionError {
+  status: "error";
+  message: string;
+}
+
+export type RollbackReportStalenessV1DiscoveryActionResult =
+  | RollbackReportStalenessV1DiscoveryActionSuccess
+  | RollbackReportStalenessV1DiscoveryActionError;
 
 function toFormStringValue(value: FormDataEntryValue | null): string {
   return typeof value === "string" ? value : "";
@@ -65,6 +84,25 @@ export async function runRepairLabSmokeAction(
       status: "error",
       message: "Unexpected server error while running smoke test. Check server logs and retry.",
       runResult: null,
+    };
+  }
+}
+
+export async function runRollbackReportStalenessV1DiscoveryBaselineAction(): Promise<RollbackReportStalenessV1DiscoveryActionResult> {
+  try {
+    const evaluation = await evaluateRollbackReportStalenessV1Discovery({
+      repetitions: ROLLBACK_REPORT_STALENESS_V1_DISCOVERY_REPETITIONS,
+    });
+
+    return {
+      status: "ok",
+      evaluation,
+    };
+  } catch {
+    return {
+      status: "error",
+      message:
+        "Unexpected server error while running rollback-report-staleness-v1 discovery baseline. Check server logs and retry.",
     };
   }
 }
